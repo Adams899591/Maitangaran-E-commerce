@@ -11,48 +11,44 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 
-export default function SignUpScreen() {
-  const router = useRouter();
+export default function ProfileScreen() {
+  // Local state initialized with your exact API schema fields
+  const [customerName, setCustomerName] = useState('Jane Doe');
+  const [email, setEmail] = useState('jane.doe@example.com');
+  const [phone, setPhone] = useState('+2348012345678');
+  const [address, setAddress] = useState('42 Marina Road, Lagos');
+  const [address2, setAddress2] = useState('Suite 12B');
+  const [prefferedAddress, setPrefferedAddress] = useState('42 Marina Road');
+  const [prefferedState, setPrefferedState] = useState('Lagos');
   
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [address, setAddress] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  
-  const [securePassword, setSecurePassword] = useState(true);
-  const [secureConfirm, setSecureConfirm] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Validation Engine: Button stays disabled until all fields are filled & passwords match
+  // Validation Logic: Stays disabled if key tracking or contact fields are blank
   const isFormValid = 
-    fullName.trim() !== '' &&
-    username.trim() !== '' &&
+    customerName.trim() !== '' &&
     email.trim() !== '' &&
+    phone.trim() !== '' &&
     address.trim() !== '' &&
-    password.trim() !== '' &&
-    confirmPassword.trim() !== '' &&
-    password === confirmPassword &&
     !isLoading;
 
-  const handleSignUp = () => {
+  const handleUpdateProfile = () => {
     if (!isFormValid) return;
     
     setIsLoading(true);
     
-    // Simulating signup registration payload
+    // Simulating API registration profile payload save
     setTimeout(() => {
       setIsLoading(false);
-      console.log('Registration Payload Complete', { 
-        fullName, username, email, address, password 
+      Alert.alert("Success", "Profile information updated successfully!");
+      console.log('Profile Save Success', { 
+        customerName, email, phone, address, address2, prefferedAddress, prefferedState 
       });
-    }, 2500);
+    }, 2000);
   };
 
   return (
@@ -71,8 +67,8 @@ export default function SignUpScreen() {
             
             {/* INTRO TEXT */}
             <View className="mt-6 mb-8">
-              <Text className="text-3xl font-black tracking-tighter text-black mb-1">Create Account</Text>
-              <Text className="text-xs text-gray-400 font-medium">Please fill in the fields below to get started.</Text>
+              <Text className="text-3xl font-black tracking-tighter text-black mb-1">Account Profile</Text>
+              <Text className="text-xs text-gray-400 font-medium">Keep your distribution and shipping coordinates up to date.</Text>
             </View>
 
             {/* INPUT CONTAINERS */}
@@ -83,29 +79,11 @@ export default function SignUpScreen() {
                 <View className="flex-row items-center bg-gray-100 px-4 py-3 rounded-xl border border-gray-100 focus:border-black">
                   <Feather name="user" size={16} color="#6B7280" />
                   <TextInput
-                    placeholder="John Doe"
+                    placeholder="Full Name"
                     placeholderTextColor="#9CA3AF"
-                    value={fullName}
-                    onChangeText={setFullName}
+                    value={customerName}
+                    onChangeText={setCustomerName}
                     editable={!isLoading}
-                    className="flex-1 text-black text-sm ml-3 font-normal"
-                  />
-                </View>
-              </View>
-
-              {/* Username */}
-              <View className="mb-4">
-                <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-1.5">Username</Text>
-                <View className="flex-row items-center bg-gray-100 px-4 py-3 rounded-xl border border-gray-100 focus:border-black">
-                  <Feather name="at-sign" size={16} color="#6B7280" />
-                  <TextInput
-                    placeholder="johndoe"
-                    placeholderTextColor="#9CA3AF"
-                    value={username}
-                    onChangeText={setUsername}
-                    editable={!isLoading}
-                    autoCapitalize="none"
-                    autoCorrect={false}
                     className="flex-1 text-black text-sm ml-3 font-normal"
                   />
                 </View>
@@ -117,7 +95,7 @@ export default function SignUpScreen() {
                 <View className="flex-row items-center bg-gray-100 px-4 py-3 rounded-xl border border-gray-100 focus:border-black">
                   <Feather name="mail" size={16} color="#6B7280" />
                   <TextInput
-                    placeholder="john@example.com"
+                    placeholder="email@example.com"
                     placeholderTextColor="#9CA3AF"
                     value={email}
                     onChangeText={setEmail}
@@ -129,13 +107,30 @@ export default function SignUpScreen() {
                 </View>
               </View>
 
-              {/* Physical Delivery Address */}
+              {/* Phone Number */}
+              <View className="mb-4">
+                <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-1.5">Phone Number</Text>
+                <View className="flex-row items-center bg-gray-100 px-4 py-3 rounded-xl border border-gray-100 focus:border-black">
+                  <Feather name="phone" size={16} color="#6B7280" />
+                  <TextInput
+                    placeholder="Phone Number"
+                    placeholderTextColor="#9CA3AF"
+                    value={phone}
+                    onChangeText={setPhone}
+                    editable={!isLoading}
+                    keyboardType="phone-pad"
+                    className="flex-1 text-black text-sm ml-3 font-normal"
+                  />
+                </View>
+              </View>
+
+              {/* Delivery Address */}
               <View className="mb-4">
                 <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-1.5">Delivery Address</Text>
                 <View className="flex-row items-center bg-gray-100 px-4 py-3 rounded-xl border border-gray-100 focus:border-black">
                   <Feather name="map-pin" size={16} color="#6B7280" />
                   <TextInput
-                    placeholder="12 Awolowo Road, Lagos"
+                    placeholder="Street Address"
                     placeholderTextColor="#9CA3AF"
                     value={address}
                     onChangeText={setAddress}
@@ -145,56 +140,58 @@ export default function SignUpScreen() {
                 </View>
               </View>
 
-              {/* Password */}
+              {/* Suite / Apartment */}
               <View className="mb-4">
-                <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-1.5">Password</Text>
+                <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-1.5">Suite / Apartment</Text>
                 <View className="flex-row items-center bg-gray-100 px-4 py-3 rounded-xl border border-gray-100 focus:border-black">
-                  <Feather name="lock" size={16} color="#6B7280" />
+                  <Feather name="layers" size={16} color="#6B7280" />
                   <TextInput
-                    placeholder="••••••••"
+                    placeholder="Suite, unit, apartment (optional)"
                     placeholderTextColor="#9CA3AF"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={securePassword}
+                    value={address2}
+                    onChangeText={setAddress2}
                     editable={!isLoading}
-                    autoCapitalize="none"
                     className="flex-1 text-black text-sm ml-3 font-normal"
                   />
-                  <TouchableOpacity onPress={() => setSecurePassword(!securePassword)} disabled={isLoading}>
-                    <Feather name={securePassword ? 'eye-off' : 'eye'} size={16} color="#6B7280" />
-                  </TouchableOpacity>
                 </View>
               </View>
 
-              {/* Confirm Password */}
-              <View className="mb-6">
-                <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-1.5">Confirm Password</Text>
-                <View className="flex-row items-center bg-gray-100 px-4 py-3 rounded-xl border border-gray-100 focus:border-black">
-                  <Feather name="shield" size={16} color="#6B7280" />
-                  <TextInput
-                    placeholder="••••••••"
-                    placeholderTextColor="#9CA3AF"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry={secureConfirm}
-                    editable={!isLoading}
-                    autoCapitalize="none"
-                    className="flex-1 text-black text-sm ml-3 font-normal"
-                  />
-                  <TouchableOpacity onPress={() => setSecureConfirm(!secureConfirm)} disabled={isLoading}>
-                    <Feather name={secureConfirm ? 'eye-off' : 'eye'} size={16} color="#6B7280" />
-                  </TouchableOpacity>
+              {/* Preferred Hub / Address & State (Side by Side Row) */}
+              <View className="flex-row space-x-3 mb-6">
+                <View className="flex-1">
+                  <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-1.5">Preferred Hub</Text>
+                  <View className="flex-row items-center bg-gray-100 px-4 py-3 rounded-xl border border-gray-100 focus:border-black">
+                    <TextInput
+                      placeholder="Hub Location"
+                      placeholderTextColor="#9CA3AF"
+                      value={prefferedAddress}
+                      onChangeText={setPrefferedAddress}
+                      editable={!isLoading}
+                      className="flex-1 text-black text-sm font-normal"
+                    />
+                  </View>
                 </View>
-                {password !== '' && confirmPassword !== '' && password !== confirmPassword && (
-                  <Text className="text-[11px] text-red-500 font-bold mt-1.5 ml-1">Passwords do not match</Text>
-                )}
+
+                <View className="flex-1">
+                  <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-1.5">State</Text>
+                  <View className="flex-row items-center bg-gray-100 px-4 py-3 rounded-xl border border-gray-100 focus:border-black">
+                    <TextInput
+                      placeholder="State"
+                      placeholderTextColor="#9CA3AF"
+                      value={prefferedState}
+                      onChangeText={setPrefferedState}
+                      editable={!isLoading}
+                      className="flex-1 text-black text-sm font-normal"
+                    />
+                  </View>
+                </View>
               </View>
             </View>
 
             {/* ACTION CONTAINER */}
-            <View className="mt-2">
+            <View className="mt-2 mb-8">
               <TouchableOpacity 
-                onPress={handleSignUp}
+                onPress={handleUpdateProfile}
                 disabled={!isFormValid}
                 className={`w-full py-4 rounded-xl flex-row justify-center items-center ${
                   isFormValid ? 'bg-black active:opacity-90' : isLoading ? 'bg-black' : 'bg-gray-200'
@@ -203,7 +200,7 @@ export default function SignUpScreen() {
                 {isLoading ? (
                   <View className="flex-row items-center justify-center">
                     <ActivityIndicator size="small" color="#FFFFFF" className="mr-2" />
-                    <Text className="text-xs font-black tracking-widest uppercase text-white">Creating Account...</Text>
+                    <Text className="text-xs font-black tracking-widest uppercase text-white">Saving Changes...</Text>
                   </View>
                 ) : (
                   <Text 
@@ -211,17 +208,10 @@ export default function SignUpScreen() {
                       isFormValid ? 'text-white' : 'text-gray-400'
                     }`}
                   >
-                    Sign Up
+                    Save Changes
                   </Text>
                 )}
               </TouchableOpacity>
-
-              <View className="flex-row justify-center items-center mt-5 mb-8">
-                <Text className="text-xs text-gray-400 font-medium">Already have an account? </Text>
-                <TouchableOpacity onPress={() => router.push('/login')} disabled={isLoading}>
-                  <Text className="text-xs font-black text-black">Sign In</Text>
-                </TouchableOpacity>
-              </View>
             </View>
 
           </ScrollView>

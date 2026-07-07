@@ -6,7 +6,7 @@ import CustomHeader from '../components/CustomHeader';
 import { Ionicons } from '@expo/vector-icons';
 
 // Custom component to display the Logo and Name at the top of the drawer
-function CustomDrawerContent(props) {
+function CustomDrawerContent(props) { 
   return (
     <DrawerContentScrollView {...props}>
       <View style={styles.logoContainer}>
@@ -50,37 +50,71 @@ export default function DrawerLayout() {
           },
         }}
       >
-        {/* Main entry point which is your tab layout */}
+
+        {/* 1. Map your tab folder route here and rename it visually */}
         <Drawer.Screen
-          name="(tabs)"
+          name="(tabs)" // Change this to match your exact tab folder name (e.g., "(tabs)" or "tabs")
           options={{
             drawerLabel: 'Home',
             title: 'Home',
-            drawerIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="home-outline" size={size} color={color} />
+            ),
           }}
         />
 
-        {/* Login Screen */}
+        {/* 2. Dashboard Screen */}
         <Drawer.Screen
-          name="login"
+          name="dashboard" // Matches your routing file name (e.g., dashboard.tsx)
           options={{
-            drawerLabel: 'Login',
-            title: 'Login',
-            drawerIcon: ({ color, size }) => <Ionicons name="log-in-outline" size={size} color={color} />,
+            drawerLabel: 'Dashboard',
+            title: 'Dashboard',
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="grid-outline" size={size} color={color}  />
+            ),
           }}
         />
 
-        {/* Sign Up Screen */}
+        {/* Profile Screen */}
+        <Drawer.Screen
+          name="profile" // Matches your routing file name (e.g., profile.tsx)
+          options={{
+            drawerLabel: 'Account Profile',
+            title: 'Account Profile',
+            drawerIcon: ({ color, size }) => (
+              <Ionicons 
+                name="person-outline" size={size} color={color}  
+              />
+            ),
+          }}
+        />
+
+        {/* Orders Screen */}
+        <Drawer.Screen
+          name="orders" // Matches your routing file name (e.g., orders.tsx or (orders))
+          options={{
+            drawerLabel: 'Order Ledger',
+            title: 'Order Ledger',
+            drawerIcon: ({ color, size }) => (
+              <Ionicons 
+                name="receipt-outline" size={size} color={color}  
+              />
+            ),
+          }}
+        />
+
+        {/* Sign Up Screen  hidden*/}
         <Drawer.Screen
           name="signup"
           options={{
-            drawerLabel: 'Sign Up',
-            title: 'Sign Up',
-            drawerIcon: ({ color, size }) => <Ionicons name="person-add-outline" size={size} color={color} />,
+            drawerItemStyle: {
+              display: "none"
+            }
           }}
+
         />
 
-        {/* Sign Up Screen */}
+        {/* Sign Up Screen  hidden*/}
         <Drawer.Screen
           name="single-product"
           options={{
@@ -118,3 +152,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF', // Changed to white for high contrast against the black section
   },
 });
+
+
+

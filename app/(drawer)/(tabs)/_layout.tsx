@@ -69,14 +69,14 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 4. Order History */}
+      {/* 4. Login */}
       <Tabs.Screen
-        name="orders"
+        name="login"
         options={{
-          title: "Orders",
+          title: "Login",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons 
-              name={focused ? "receipt" : "receipt-outline"} 
+              name={focused ? "log-in" : "log-in-outline"} 
               size={22} 
               color={color} 
             />
@@ -85,7 +85,7 @@ export default function TabLayout() {
       />
 
       {/* 5. User Profile & Settings */}
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
@@ -97,7 +97,7 @@ export default function TabLayout() {
             />
           ),
         }}
-      />
+      /> */}
     </Tabs>
   );
 }

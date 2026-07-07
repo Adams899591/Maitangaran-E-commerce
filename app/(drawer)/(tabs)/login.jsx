@@ -14,10 +14,13 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
+
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
@@ -35,6 +38,7 @@ export default function LoginScreen() {
     setTimeout(() => {
       setIsLoading(false);
       console.log('Authentication complete', { username, password });
+      router.push('/dashboard');
     }, 2500);
   };
 
@@ -129,7 +133,7 @@ export default function LoginScreen() {
 
               <View className="flex-row justify-center items-center mt-5">
                 <Text className="text-xs text-gray-400 font-medium">Don't have an account? </Text>
-                <TouchableOpacity disabled={isLoading}>
+                <TouchableOpacity onPress={() => router.push('/signup')} disabled={isLoading}>
                   <Text className="text-xs font-black text-black">Sign Up</Text>
                 </TouchableOpacity>
               </View>
