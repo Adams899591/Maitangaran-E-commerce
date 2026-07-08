@@ -10,6 +10,7 @@ import {
   Dimensions 
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -31,10 +32,60 @@ const INITIAL_CART_ITEMS = [
     quantity: 2,
     image: 'https://images.unsplash.com/photo-1606744824163-985d376605aa?w=400',
   },
+  {
+    id: 'cart_3',
+    name: 'Premium Cashmere Wool Blend',
+    category: 'Fabrics',
+    price: 120000,
+    quantity: 1,
+    image: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=400',
+  },
+  {
+    id: 'cart_4',
+    name: 'Italian Brocade Floral Damask',
+    category: 'Fabrics',
+    price: 95000,
+    quantity: 3,
+    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400',
+  },
+  {
+    id: 'cart_5',
+    name: 'Organic Egyptian Cotton Linen',
+    category: 'Fabrics',
+    price: 65000,
+    quantity: 4,
+    image: 'https://images.unsplash.com/photo-1618220179428-22790b461013?w=400',
+  },
+  {
+    id: 'cart_6',
+    name: 'Handwoven Raw Silk Tussar',
+    category: 'Fabrics',
+    price: 110000,
+    quantity: 1,
+    image: 'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=400',
+  },
+    {
+    id: 'cart_7',
+    name: 'Handwoven Raw Silk Tussar',
+    category: 'Fabrics',
+    price: 110000,
+    quantity: 1,
+    image: 'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=400',
+  },
+    {
+    id: 'cart_8',
+    name: 'Handwoven Raw Silk Tussar',
+    category: 'Fabrics',
+    price: 110000,
+    quantity: 1,
+    image: 'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=400',
+  }
 ];
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState(INITIAL_CART_ITEMS);
+  const router = useRouter();
+
 
   // Quantity Management
   const updateQuantity = (id, action) => {
@@ -89,7 +140,7 @@ export default function CartScreen() {
       <FlatList
         data={cartItems}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 220 }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View className="items-center justify-center pt-32 px-6">
@@ -172,7 +223,7 @@ export default function CartScreen() {
           </View>
 
           {/* Action Checkout Call Button */}
-          <TouchableOpacity className="bg-black w-full py-4 rounded-xl flex-row justify-center items-center active:opacity-90">
+          <TouchableOpacity onPress={() => router.push('/checkout')} className="bg-black w-full py-4 rounded-xl flex-row justify-center items-center active:opacity-90">
             <Text className="text-white text-xs font-black tracking-widest uppercase mr-2">Proceed to checkout</Text>
             <Feather name="arrow-right" size={14} color="white" />
           </TouchableOpacity>

@@ -1,24 +1,57 @@
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import CustomHeader from '../components/CustomHeader';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router'; // Imported for redirection if needed
 
-// Custom component to display the Logo and Name at the top of the drawer
-function CustomDrawerContent(props) { 
+// Custom component to display the Logo, Links, and Logout button
+function CustomDrawerContent(props) {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to log out of your account?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Log Out", 
+          style: "destructive",
+          onPress: () => {
+            // Add your logout state/auth clearing logic here
+            console.log("User logged out");
+            // Example: router.replace('/login');
+          } 
+        }
+      ]
+    );
+  };
+
   return (
-    <DrawerContentScrollView {...props}>
+    // Changing the contentContainerStyle lets us flex grow the menu so the logout button sits neatly at the bottom
+    <DrawerContentScrollView {...props} contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.logoContainer}>
-        {/* Replace the source uri with your local asset path if needed, e.g., require('../assets/logo.png') */}
         <Image 
           source={{ uri: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500' }} 
           style={styles.logoImage} 
         />
         <Text style={styles.brandName}>Maitangaran</Text>
       </View>
-      {/* This renders your actual drawer navigation links (like 'Home') right below the header */}
-      <DrawerItemList {...props} />
+      
+      {/* This renders your actual drawer navigation links (like 'Home') */}
+      <View style={{ flex: 1 }}>
+        <DrawerItemList {...props} />
+      </View>
+
+      {/* --- LOGOUT BUTTON AT THE BOTTOM --- */}
+      <View style={styles.logoutContainer}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
+      </View>
     </DrawerContentScrollView>
   );
 }
@@ -27,33 +60,26 @@ export default function DrawerLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
-        // Injecting our custom header content here
         drawerContent={(props) => <CustomDrawerContent {...props} />}
-        
         screenOptions={{
-          // Use our custom header across all drawer screens
           header: () => <CustomHeader />,
-
-          // --- Professional Drawer Styling ---
           drawerStyle: {
-            backgroundColor: '#FFFFFF', // White background for the drawer list area
+            backgroundColor: '#FFFFFF',
           },
-          drawerActiveTintColor: '#000000', // Black for active item
-          drawerInactiveTintColor: '#6B7280', // Gray for inactive items
+          drawerActiveTintColor: '#000000',
+          drawerInactiveTintColor: '#6B7280',
           drawerLabelStyle: {
-            marginLeft: 0, // Kept at 0 so icon and text don't overlap
+            marginLeft: 0,
             fontSize: 14,
             fontWeight: '600',
           },
           drawerItemStyle: {
-            marginVertical: 4, // Add some space between items
+            marginVertical: 4,
           },
         }}
       >
-
-        {/* 1. Map your tab folder route here and rename it visually */}
         <Drawer.Screen
-          name="(tabs)" // Change this to match your exact tab folder name (e.g., "(tabs)" or "tabs")
+          name="(tabs)"
           options={{
             drawerLabel: 'Home',
             title: 'Home',
@@ -63,9 +89,8 @@ export default function DrawerLayout() {
           }}
         />
 
-        {/* 2. Dashboard Screen */}
         <Drawer.Screen
-          name="dashboard" // Matches your routing file name (e.g., dashboard.tsx)
+          name="dashboard"
           options={{
             drawerLabel: 'Dashboard',
             title: 'Dashboard',
@@ -75,83 +100,99 @@ export default function DrawerLayout() {
           }}
         />
 
-        {/* Profile Screen */}
         <Drawer.Screen
-          name="profile" // Matches your routing file name (e.g., profile.tsx)
+          name="profile"
           options={{
             drawerLabel: 'Account Profile',
             title: 'Account Profile',
             drawerIcon: ({ color, size }) => (
-              <Ionicons 
-                name="person-outline" size={size} color={color}  
-              />
+              <Ionicons name="person-outline" size={size} color={color} />
             ),
           }}
         />
 
-        {/* Orders Screen */}
         <Drawer.Screen
-          name="orders" // Matches your routing file name (e.g., orders.tsx or (orders))
+          name="orders"
           options={{
             drawerLabel: 'Order Ledger',
             title: 'Order Ledger',
             drawerIcon: ({ color, size }) => (
-              <Ionicons 
-                name="receipt-outline" size={size} color={color}  
-              />
+              <Ionicons name="receipt-outline" size={size} color={color} />
             ),
           }}
         />
 
-        {/* Sign Up Screen  hidden*/}
         <Drawer.Screen
-          name="signup"
+          name="about-us"
           options={{
-            drawerItemStyle: {
-              display: "none"
-            }
-          }}
-
-        />
-
-        {/* Sign Up Screen  hidden*/}
-        <Drawer.Screen
-          name="single-product"
-          options={{
-            drawerItemStyle: {
-              display: "none"
-            }
+            drawerLabel: 'About Us',
+            title: 'About Us',
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="business-outline" size={size} color={color} />
+            ),
           }}
         />
 
+        <Drawer.Screen
+          name="contact-us"
+          options={{
+            drawerLabel: 'Contact Us',
+            title: 'Contact Us',
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="mail-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        {/* Hidden Screens */}
+        <Drawer.Screen name="signup" options={{ drawerItemStyle: { display: "none" } }} />
+        <Drawer.Screen name="single-product" options={{ drawerItemStyle: { display: "none" } }} />
+        <Drawer.Screen name="checkout" options={{ drawerItemStyle: { display: "none" } }} />
+        <Drawer.Screen name="order-details" options={{ drawerItemStyle: { display: "none" } }} />
       </Drawer>
     </GestureHandlerRootView>
   );
 }
 
-// Minimal styles to keep things clean and professional
 const styles = StyleSheet.create({
   logoContainer: {
     padding: 20,
-    backgroundColor: '#000000', // Added black background to the image section
+    backgroundColor: '#000000',
     borderBottomWidth: 1,
-    borderBottomColor: '#1F2937', // Darker subtle line to match the black header
-    marginTop: -4, // Counteract internal scrollview padding to align nicely at the top
+    borderBottomColor: '#1F2937',
+    marginTop: -4,
     marginBottom: 10,
-    alignItems: 'center', // Centers logo and text
+    alignItems: 'center',
   },
   logoImage: {
     width: 60,
     height: 60,
-    borderRadius: 30, // Makes it a clean circle
+    borderRadius: 30,
     marginBottom: 10,
   },
   brandName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF', // Changed to white for high contrast against the black section
+    color: '#FFFFFF',
+  },
+  logoutContainer: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6', // Subtle divider row right above logout
+    marginBottom: 10,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#EF4444', // Red text color for semantic destructive action
+    marginLeft: 12,
   },
 });
-
-
 
