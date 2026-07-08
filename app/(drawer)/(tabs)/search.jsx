@@ -27,9 +27,19 @@ const MOCK_SEARCH_RESULTS = [
   { id: 'p2', name: 'Premium Velvet Loafers', price: '₦145,000', categoryId: 'cat_1', image: 'https://images.unsplash.com/photo-1531310197839-ccf54634509e?w=500' },
   { id: 'p3', name: 'Super Voile Fabric Silk', price: '₦85,000', categoryId: 'cat_2', image: 'https://images.unsplash.com/photo-1606744824163-985d376605aa?w=400' },
   { id: 'p4', name: 'Luxury Brocade Material', price: '₦95,000', categoryId: 'cat_2', image: 'https://images.unsplash.com/photo-1544441893-675973e31985?w=500' },
-  { id: 'p5', name: 'Premium Ankara Wax', price: '₦40,000', categoryId: 'cat_4', image: 'https://images.unsplash.com/photo-1610116306796-6ebd30d77fa1?w=500' },
+  { id: 'p5', name: 'Premium Ankara Wax', price: '₦40,000', categoryId: 'cat_4', image: '' }, // Testing placeholder fallback here
   { id: 'p6', name: 'Embroidered Swiss Lace', price: '₦110,000', categoryId: 'cat_3', image: 'https://images.unsplash.com/photo-1584143257221-f138841ea1b0?w=500' },
 ];
+
+// Global Image Placeholder Component
+function ImagePlaceholder({ heightClass = "h-44" }) {
+  return (
+    <View className={`w-full ${heightClass} bg-gray-100 items-center justify-center rounded-xl`}>
+      <Ionicons name="image-outline" size={28} color="#9CA3AF" />
+      <Text className="text-gray-400 text-[10px] font-medium mt-1">No image uploaded</Text>
+    </View>
+  );
+}
 
 export default function SearchScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');             
@@ -166,7 +176,11 @@ export default function SearchScreen({ navigation }) {
                   className="bg-white mb-4 border border-gray-100 rounded-2xl overflow-hidden p-2"
                 >
                   <View className="bg-gray-50 rounded-xl overflow-hidden">
-                    <Image source={{ uri: item.image }} className="w-full h-44" resizeMode="cover" />
+                    {item.image ? (
+                      <Image source={{ uri: item.image }} className="w-full h-44" resizeMode="cover" />
+                    ) : (
+                      <ImagePlaceholder heightClass="h-44" />
+                    )}
                   </View>
                   <View className="pt-2 px-1">
                     <Text className="text-xs font-bold text-black tracking-tight" numberOfLines={1}>{item.name}</Text>
@@ -204,7 +218,11 @@ export default function SearchScreen({ navigation }) {
           renderItem={({ item }) => (
             <View style={{ width: (width - 44) / 2 }} className="bg-white mb-4 border border-gray-100 rounded-2xl overflow-hidden p-2">
               <View className="relative bg-gray-50 rounded-xl overflow-hidden">
-                <Image source={{ uri: item.image }} className="w-full h-44" resizeMode="cover" />
+                {item.image ? (
+                  <Image source={{ uri: item.image }} className="w-full h-44" resizeMode="cover" />
+                ) : (
+                  <ImagePlaceholder heightClass="h-44" />
+                )}
               </View>
               <View className="pt-2 px-1">
                 <Text className="text-xs font-bold text-black tracking-tight" numberOfLines={1}>{item.name}</Text>

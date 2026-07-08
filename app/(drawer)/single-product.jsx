@@ -18,9 +18,19 @@ const { width } = Dimensions.get('window');
 const RELATED_PRODUCTS_DATA = [
   { id: 'r1', name: 'Classic Leather Derby', price: '₦120,000', image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=500' },
   { id: 'r2', name: 'Minimalist Chrono Watch', price: '₦195,000', image: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=500' },
-  { id: 'r3', name: 'Premium Leather Bomber', price: '₦299,000', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500' },
+  { id: 'r3', name: 'Premium Leather Bomber', price: '₦299,000', image: '' }, // Testing fallback placeholder here
   { id: 'r4', name: 'Acetate Sunglasses', price: '₦65,000', image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500' },
 ];
+
+// Global Image Placeholder Component
+function ImagePlaceholder({ heightClass = "h-40" }) {
+  return (
+    <View className={`w-full ${heightClass} bg-gray-100 items-center justify-center rounded-xl`}>
+      <Ionicons name="image-outline" size={28} color="#9CA3AF" />
+      <Text className="text-gray-400 text-[10px] font-medium mt-1">No image uploaded</Text>
+    </View>
+  );
+}
 
 export default function SingleProductScreen({ route, navigation }) {
   // Simulating the dynamic backend data payload received from your database
@@ -61,12 +71,16 @@ export default function SingleProductScreen({ route, navigation }) {
         
         {/* PRODUCT LARGE IMAGE VIEW */}
         <View style={{ width: width }} className="h-96 bg-gray-50 relative justify-center items-center">
-          <Image 
-            source={{ uri: productData.largeImage }} 
-            className="w-full h-full" 
-            resizeMode="cover" 
-          />
-          {productData.percentOff > 0 && (
+          {productData.largeImage ? (
+            <Image 
+              source={{ uri: productData.largeImage }} 
+              className="w-full h-full" 
+              resizeMode="cover" 
+            />
+          ) : (
+            <ImagePlaceholder heightClass="h-96" />
+          )}
+          {productData.percentOff > 0 && productData.largeImage && (
             <View className="absolute top-4 left-4 bg-black px-3 py-1 rounded-full">
               <Text className="text-white text-[10px] font-black tracking-wider">{productData.percentOff}% OFF</Text>
             </View>
@@ -174,7 +188,11 @@ export default function SingleProductScreen({ route, navigation }) {
                 className="bg-white border border-gray-100 rounded-2xl overflow-hidden p-2 mr-4"
               >
                 <View className="bg-gray-50 rounded-xl overflow-hidden">
-                  <Image source={{ uri: product.image }} className="w-full h-40 object-cover" />
+                  {product.image ? (
+                    <Image source={{ uri: product.image }} className="w-full h-40 object-cover" />
+                  ) : (
+                    <ImagePlaceholder heightClass="h-40" />
+                  )}
                 </View>
                 <View className="pt-2 px-1">
                   <Text className="text-xs font-bold text-black tracking-tight" numberOfLines={1}>

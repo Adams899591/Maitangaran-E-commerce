@@ -39,7 +39,7 @@ const CATEGORIES_DATA = [
 const CATEGORY_SHOWCASE_DATA = [
   { id: 'cs1', name: 'Premium Voile Classic', previewPrice: '₦45,000', image: 'https://images.unsplash.com/photo-1606744824163-985d376605aa?w=400' },
   { id: 'cs2', name: 'Luxury Shadda Segment', previewPrice: '₦65,000', image: 'https://images.unsplash.com/photo-1544441893-675973e31985?w=400' },
-  { id: 'cs3', name: 'Exclusive Royal Lace', previewPrice: '₦85,000', image: 'https://images.unsplash.com/photo-1584143257221-f138841ea1b0?w=400' },
+  { id: 'cs3', name: 'Exclusive Royal Lace', previewPrice: '₦85,000', image: '' }, // Testing fallback placeholder here
 ];
 
 // Renamed from FEATURED_FABRICS_DATA to FEATURED_PRODUCT
@@ -70,6 +70,16 @@ function EmptySectionState({ message, heightClass = "h-44" }) {
       <Text className="text-gray-400 text-xs font-medium mt-2 text-center tracking-tight max-w-[250px]">
         {message}
       </Text>
+    </View>
+  );
+}
+
+// Global Image Placeholder Component
+function ImagePlaceholder({ heightClass = "h-44" }) {
+  return (
+    <View className={`w-full ${heightClass} bg-gray-100 items-center justify-center`}>
+      <Ionicons name="image-outline" size={28} color="#9CA3AF" />
+      <Text className="text-gray-400 text-[10px] font-medium mt-1">No image uploaded</Text>
     </View>
   );
 }
@@ -189,7 +199,11 @@ export default function HomeScreen() {
             scrollEventThrottle={16}
             renderItem={({ item }) => (
               <View style={{ width: width - 32 }} className="mx-4 h-48 bg-black rounded-2xl overflow-hidden relative">
-                <Image source={{ uri: item.image }} className="w-full h-full opacity-60 absolute" />
+                {item.image ? (
+                  <Image source={{ uri: item.image }} className="w-full h-full opacity-60 absolute" />
+                ) : (
+                  <View className="absolute inset-0 opacity-40"><ImagePlaceholder heightClass="h-full" /></View>
+                )}
                 <View className="p-6 justify-between h-full z-10">
                   <View>
                     <Text className="text-white text-[10px] font-bold tracking-widest bg-black/40 self-start px-2 py-1 rounded">LIMITED</Text>
@@ -264,7 +278,11 @@ export default function HomeScreen() {
                 renderItem={({ item }) => (
                   <View style={{ width: width * 0.44 }} className="bg-white border border-gray-100 rounded-2xl overflow-hidden p-2 mr-4">
                     <View className="relative bg-gray-50 rounded-xl overflow-hidden">
-                      <Image source={{ uri: item.image }} className="w-full h-44 object-cover" />
+                      {item.image ? (
+                        <Image source={{ uri: item.image }} className="w-full h-44 object-cover" />
+                      ) : (
+                        <ImagePlaceholder heightClass="h-44" />
+                      )}
                     </View>
                     <View className="pt-2 px-1">
                       <Text className="text-xs font-bold text-black tracking-tight" numberOfLines={1}>{item.name}</Text>
@@ -304,7 +322,11 @@ export default function HomeScreen() {
                   className="bg-white border border-gray-100 rounded-2xl overflow-hidden p-2 mr-4"
                 >
                   <View className="bg-gray-50 rounded-xl overflow-hidden">
-                    <Image source={{ uri: item.image }} className="w-full h-36 object-cover" />
+                    {item.image ? (
+                      <Image source={{ uri: item.image }} className="w-full h-36 object-cover" />
+                    ) : (
+                      <ImagePlaceholder heightClass="h-36" />
+                    )}
                   </View>
                   <View className="pt-2 pb-1 px-1 flex-row justify-between items-center">
                     <View className="flex-1 pr-1">
@@ -340,8 +362,12 @@ export default function HomeScreen() {
               renderItem={({ item: product }) => (
                 <View style={{ width: width * 0.44 }} className="bg-white border border-gray-100 rounded-2xl overflow-hidden p-2 mr-4">
                   <View className="relative bg-gray-50 rounded-xl overflow-hidden">
-                    <Image source={{ uri: product.image }} className="w-full h-40 object-cover" />
-                    {product.oldPrice && (
+                    {product.image ? (
+                      <Image source={{ uri: product.image }} className="w-full h-40 object-cover" />
+                    ) : (
+                      <ImagePlaceholder heightClass="h-40" />
+                    )}
+                    {product.oldPrice && product.image && (
                       <View className="absolute bottom-2 left-2 bg-black px-2 py-0.5 rounded">
                         <Text className="text-white text-[10px] font-bold">SALE</Text>
                       </View>
@@ -383,7 +409,11 @@ export default function HomeScreen() {
               {NEW_ARRIVALS_DATA.map((product) => (
                 <View key={product.id} style={{ width: (width - 44) / 2 }} className="bg-white mb-4 border border-gray-100 rounded-2xl overflow-hidden p-2">
                   <View className="relative bg-gray-50 rounded-xl overflow-hidden">
-                    <Image source={{ uri: product.image }} className="w-full h-44 object-cover" />
+                    {product.image ? (
+                      <Image source={{ uri: product.image }} className="w-full h-44 object-cover" />
+                    ) : (
+                      <ImagePlaceholder heightClass="h-44" />
+                    )}
                   </View>
                   <View className="pt-2 px-1">
                     <Text className="text-xs font-bold text-black tracking-tight" numberOfLines={1}>{product.name}</Text>
