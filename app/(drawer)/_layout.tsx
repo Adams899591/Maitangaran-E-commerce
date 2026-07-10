@@ -5,10 +5,13 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Alert } from 'react-na
 import CustomHeader from '../components/CustomHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router'; // Imported for redirection if needed
+import { useContext } from 'react';
+import { UserContext } from '../context/UserContext';
 
 // Custom component to display the Logo, Links, and Logout button
 function CustomDrawerContent(props) {
   const router = useRouter();
+ 
 
   const handleLogout = () => {
     Alert.alert(
@@ -57,6 +60,7 @@ function CustomDrawerContent(props) {
 }
 
 export default function DrawerLayout() {
+   const { user, setUser } = useContext(UserContext);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
@@ -89,13 +93,16 @@ export default function DrawerLayout() {
           }}
         />
 
+
         <Drawer.Screen
           name="dashboard"
           options={{
             drawerLabel: 'Dashboard',
             title: 'Dashboard',
+            // This dynamically hides the row item from the sidebar menu if user is falsey
+            drawerItemStyle: { display: user ? 'flex' : 'none' },
             drawerIcon: ({ color, size }) => (
-              <Ionicons name="grid-outline" size={size} color={color}  />
+              <Ionicons name="grid-outline" size={size} color={color} />
             ),
           }}
         />
@@ -105,6 +112,7 @@ export default function DrawerLayout() {
           options={{
             drawerLabel: 'Account Profile',
             title: 'Account Profile',
+            drawerItemStyle: { display: user ? 'flex' : 'none' }, // hide this screen if the user is not login
             drawerIcon: ({ color, size }) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),
@@ -116,6 +124,7 @@ export default function DrawerLayout() {
           options={{
             drawerLabel: 'Order Ledger',
             title: 'Order Ledger',
+            drawerItemStyle: { display: user ? 'flex' : 'none' },  // hide this screen if the user is not login
             drawerIcon: ({ color, size }) => (
               <Ionicons name="receipt-outline" size={size} color={color} />
             ),

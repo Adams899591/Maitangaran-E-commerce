@@ -107,7 +107,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-     <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+        <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
       {/*  
         PROFESSIONAL TOP BANNER PLACEMENT 

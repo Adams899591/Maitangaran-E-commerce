@@ -35,7 +35,7 @@ export default function LoginScreen() {
 
   const isFormValid = username.trim() !== '' && password.trim() !== '' && !isLoading;
 
-
+  // console.log(JSON.stringify( user, null, 2));
   // handle login form 
   const handleLogin = async () => {
     if (!isFormValid) return;

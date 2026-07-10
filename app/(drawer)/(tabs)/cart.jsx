@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { 
   View, 
-  Text, 
-  SafeAreaView, 
-  StatusBar, 
+  Text,  
+  StatusBar,   
   FlatList, 
   Image, 
   TouchableOpacity, 
@@ -13,7 +12,10 @@ import {
   RefreshControl 
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { UserContext } from '@/app/context/UserContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import axios from 'axios';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
@@ -63,7 +65,15 @@ function ImagePlaceholder({ heightClass = "h-full" }) {
   );
 }
 
-export default function CartScreen() {
+export default function CartScreen() {      
+  
+  const { user, setUser } = useContext(UserContext);
+  const token  = user?.Token; // Extract the user token from the user
+
+   const { productID , quantity, variantID } = useLocalSearchParams();  // get the product id, quantity, and varentid if any  from the single product page
+
+  //  console.log(productID , quantity, variantID);
+   
   // --- STATE HOOKS ---
   const [cartItems, setCartItems] = useState(INITIAL_CART_ITEMS);
   const [savingItemIds, setSavingItemIds] = useState({});
@@ -81,6 +91,187 @@ export default function CartScreen() {
   });
 
   const router = useRouter();
+
+
+
+
+
+
+
+
+
+
+
+
+ // fetchAddToUserCart
+  useEffect(() => {
+
+    const addProductToUserCart = async () => {
+        try {
+          
+         const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/cart/add`,{
+                          productID: productID,
+                          quantity: quantity,
+                          variantID: variantID,
+                        },{
+                          headers: {
+                              // This tells the backend exactly who is making the request
+                              Authorization: `Bearer ${token}` 
+                          }
+                        });
+         
+          const res = response.data;
+                      if(res.Success == true){
+                        console.log("product has been added successfuly");
+                      }
+                      // console.log(JSON.stringify(response, null, 2));
+                      
+          
+        } catch (error) {
+          console.log(error);
+          
+        }
+    }
+
+
+    addProductToUserCart();
+  }, []);
+
+
+
+ // deleteProductfromUserCart
+  useEffect(() => {
+
+    const deleteProductfromUserCart = async () => {
+        try {
+          
+         const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/cart/remove`,{
+                          productIDs: productID,
+                        },{
+                          headers: {
+                              // This tells the backend exactly who is making the request
+                              Authorization: `Bearer ${token}` 
+                          }
+                        });
+         
+          const res = response.data;
+                      if(res.Success == true){
+                        console.log("product has been deleted successfuly");
+                      }
+                      // console.log(JSON.stringify(response, null, 2));
+                      
+          
+        } catch (error) {
+          console.log(error);
+          
+        }
+    }
+
+
+    deleteProductfromUserCart();
+  }, []);
+
+ // deleteAllProductfromUserCart
+  useEffect(() => {
+
+    const deleteAllProductfromUserCart = async () => {
+        try {
+          
+         const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/cart/remove`,{
+                          headers: {
+                              // This tells the backend exactly who is making the request
+                              Authorization: `Bearer ${token}` 
+                          }
+                        });
+         
+          const res = response.data;
+                      if(res.Success == true){
+                        console.log("all product has been deleted successfuly");
+                      }
+                      // console.log(JSON.stringify(response, null, 2));
+                      
+          
+        } catch (error) {
+          console.log(error);
+          
+        }
+    }
+
+
+    deleteAllProductfromUserCart();
+  }, []);
+
+
+// updateProductfromUserCart
+  useEffect(() => {
+
+    const updateProductfromUserCart = async () => {
+        try {
+          
+         const response = await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/cart/update`,{
+                          productID: productID,
+                          quantity: quantity,
+                          variantID: variantID, // only if the product have variant
+                        },{
+                          headers: {
+                              // This tells the backend exactly who is making the request
+                              Authorization: `Bearer ${token}` 
+                          }
+                        });
+         
+          const res = response.data;
+                      if(res.Success == true){
+                        console.log("product has been updated successfuly");
+                      }
+                      // console.log(JSON.stringify(response, null, 2));
+                      
+          
+        } catch (error) {
+          console.log(error);
+          
+        }
+    }
+
+
+    updateProductfromUserCart();
+  }, []);
+
+   // fetch all user cart
+  useEffect(() => { 
+
+    const fetchAllUserCart = async () => {
+        try {
+          
+         const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/cart`,{
+                          headers: {
+                              // This tells the backend exactly who is making the request
+                              Authorization: `Bearer ${token}` 
+                          }
+                      });
+         
+                         console.log("product has been fetched successfuly");
+                      console.log(JSON.stringify(response, null, 2));
+                      
+          
+        } catch (error) {
+          console.log(error);
+          
+        }
+    }
+
+
+    fetchAllUserCart();
+  }, []);
+
+
+
+
+
+
+
+
+
+
 
   // --- LOGIC MECHANISMS & API HANDLERS ---
 
@@ -426,6 +617,3 @@ export default function CartScreen() {
     </SafeAreaView>
   );
 }
-
-
-
