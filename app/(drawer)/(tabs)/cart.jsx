@@ -19,43 +19,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-// Mock Data representing items initially available inside the user's bag
-const INITIAL_CART_ITEMS = [
-  {
-    id: 'cart_1',
-    name: 'Classic Leather Derby',
-    category: 'Shoes',
-    price: 120000,
-    quantity: 1,
-    image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=500',
-  },
-  {
-    id: 'cart_2',
-    name: 'Super Voile Fabric Silk',
-    category: 'Fabrics',
-    price: 85000,
-    quantity: 2,
-    image: 'https://images.unsplash.com/photo-1606744824163-985d376605aa?w=400',
-  },
-  {
-    id: 'cart_3',
-    name: 'Premium Cashmere Wool Blend',
-    category: 'Fabrics',
-    price: 120000,
-    quantity: 1,
-    image: '', 
-  },
-  {
-    id: 'cart_4',
-    name: 'Italian Brocade Floral Damask',
-    category: 'Fabrics',
-    price: 95000,
-    quantity: 3,
-    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400',
-  }
-];
-
-// Fallback component layout for inventory missing clean cover urls
 function ImagePlaceholder({ heightClass = "h-full" }) {
   return (
     <View className={`w-full ${heightClass} bg-gray-100 items-center justify-center rounded-xl px-1`}>
@@ -67,260 +30,106 @@ function ImagePlaceholder({ heightClass = "h-full" }) {
 
 export default function CartScreen() {      
   
-  const { user, setUser } = useContext(UserContext);
-  const token  = user?.Token; // Extract the user token from the user
+  const { user } = useContext(UserContext);
+  const token = user?.Token; 
 
-   const { productID , quantity, variantID } = useLocalSearchParams();  // get the product id, quantity, and varentid if any  from the single product page
+  const { productID, quantity: paramQuantity, variantID } = useLocalSearchParams();  
 
-  //  console.log(productID , quantity, variantID);
-   
   // --- STATE HOOKS ---
-  const [cartItems, setCartItems] = useState(INITIAL_CART_ITEMS);
+  const [cartItems, setCartItems] = useState([]);
   const [savingItemIds, setSavingItemIds] = useState({});
-  const [itemToDelete, setItemToDelete] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null); 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false); 
-  const [isClearing, setIsClearing] = useState(false); // <-- NEW STATE: Tracks server side "Clear all" request status
+  const [isClearing, setIsClearing] = useState(false); 
   
-  // Totals layout structure managed globally through mock state
   const [cartTotals, setCartTotals] = useState({
-    subtotal: 715000,
-    deliveryFee: 5000,
-    totalAmount: 720000,
-    totalQuantity: 14
+    subtotal: 0,
+    deliveryFee: 0, 
+    totalAmount: 0,
+    totalQuantity: 0
   });
 
   const router = useRouter();
 
-
-
-
-
-
-
-
-
-
-
-
- // fetchAddToUserCart
-  useEffect(() => {
-
-    const addProductToUserCart = async () => {
-        try {
-          
-         const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/cart/add`,{
-                          productID: productID,
-                          quantity: quantity,
-                          variantID: variantID,
-                        },{
-                          headers: {
-                              // This tells the backend exactly who is making the request
-                              Authorization: `Bearer ${token}` 
-                          }
-                        });
-         
-          const res = response.data;
-                      if(res.Success == true){
-                        console.log("product has been added successfuly");
-                      }
-                      // console.log(JSON.stringify(response, null, 2));
-                      
-          
-        } catch (error) {
-          console.log(error);
-          
-        }
-    }
-
-
-    addProductToUserCart();
-  }, []);
-
-
-
- // deleteProductfromUserCart
-  useEffect(() => {
-
-    const deleteProductfromUserCart = async () => {
-        try {
-          
-         const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/cart/remove`,{
-                          productIDs: productID,
-                        },{
-                          headers: {
-                              // This tells the backend exactly who is making the request
-                              Authorization: `Bearer ${token}` 
-                          }
-                        });
-         
-          const res = response.data;
-                      if(res.Success == true){
-                        console.log("product has been deleted successfuly");
-                      }
-                      // console.log(JSON.stringify(response, null, 2));
-                      
-          
-        } catch (error) {
-          console.log(error);
-          
-        }
-    }
-
-
-    deleteProductfromUserCart();
-  }, []);
-
- // deleteAllProductfromUserCart
-  useEffect(() => {
-
-    const deleteAllProductfromUserCart = async () => {
-        try {
-          
-         const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/cart/remove`,{
-                          headers: {
-                              // This tells the backend exactly who is making the request
-                              Authorization: `Bearer ${token}` 
-                          }
-                        });
-         
-          const res = response.data;
-                      if(res.Success == true){
-                        console.log("all product has been deleted successfuly");
-                      }
-                      // console.log(JSON.stringify(response, null, 2));
-                      
-          
-        } catch (error) {
-          console.log(error);
-          
-        }
-    }
-
-
-    deleteAllProductfromUserCart();
-  }, []);
-
-
-// updateProductfromUserCart
-  useEffect(() => {
-
-    const updateProductfromUserCart = async () => {
-        try {
-          
-         const response = await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/cart/update`,{
-                          productID: productID,
-                          quantity: quantity,
-                          variantID: variantID, // only if the product have variant
-                        },{
-                          headers: {
-                              // This tells the backend exactly who is making the request
-                              Authorization: `Bearer ${token}` 
-                          }
-                        });
-         
-          const res = response.data;
-                      if(res.Success == true){
-                        console.log("product has been updated successfuly");
-                      }
-                      // console.log(JSON.stringify(response, null, 2));
-                      
-          
-        } catch (error) {
-          console.log(error);
-          
-        }
-    }
-
-
-    updateProductfromUserCart();
-  }, []);
-
-   // fetch all user cart
-  useEffect(() => { 
-
-    const fetchAllUserCart = async () => {
-        try {
-          
-         const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/cart`,{
-                          headers: {
-                              // This tells the backend exactly who is making the request
-                              Authorization: `Bearer ${token}` 
-                          }
-                      });
-         
-                         console.log("product has been fetched successfuly");
-                      console.log(JSON.stringify(response, null, 2));
-                      
-          
-        } catch (error) {
-          console.log(error);
-          
-        }
-    }
-
-
-    fetchAllUserCart();
-  }, []);
-
-
-
-
-
-
-
-
-
-
-
-  // --- LOGIC MECHANISMS & API HANDLERS ---
-
-  /**
-   * 1. Pull-to-Refresh Action
-   * Triggered when swipe down actions occur over the primary FlatList.
-   * Place your primary cart synchronization and recalculation endpoint logic here.
-   */
-  const handleOnRefresh = async () => {
-    setIsRefreshing(true);
+  // 1. Fetch entire user cart
+  const fetchAllUserCart = async () => {
+    if (!token) return;
     try {
-      console.log("Pull-to-refresh activated. Syncing with backend server...");
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/cart`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      // Simulating network roundtrip latency (1.5 seconds)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // PLACE YOUR BACKEND FETCH LOGIC HERE:
-      // const response = await axios.get('/api/cart');
-      // setCartItems(response.data.items);
-      // setCartTotals(response.data.totals);
-      
+      const res = response.data;
+      if (res.Success && res.Data) {
+        setCartItems(res.Data.Items || []);
+        setCartTotals({
+          subtotal: res.Data.Total || 0,
+          deliveryFee: 0 ,      //res.Data.Items?.length > 0 ? 5000 : 0,
+          totalAmount: res.Data.Total, //? (res.Data.Total + 5000) : 0,
+          totalQuantity: (res.Data.Items || []).reduce((acc, item) => acc + (item.Quantity || 0), 0)
+        });
+      }
     } catch (error) {
-      console.error("Failed to sync cart data on pull-to-refresh:", error);
-    } finally {
-      setIsRefreshing(false); // Clean up load states immediately
+      console.log("Error fetching cart:", error);
     }
   };
 
+  useEffect(() => {
+    fetchAllUserCart();
+  }, [token]);
+
+  // 2. Add item to cart automatically on navigation
+  useEffect(() => {
+    const addProductToUserCart = async () => {
+      if (!productID || !token) return;
+      try {
+        const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/cart/add`, {
+          productID: productID,
+          quantity: paramQuantity ? parseInt(paramQuantity, 10) : 1,
+          variantID: variantID || null,
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data.Success) {
+          console.log("Product added successfully");
+          fetchAllUserCart(); 
+        }
+      } catch (error) {
+        console.log("Error adding product:", error);
+      }
+    };
+
+    addProductToUserCart();
+  }, [productID, token]);
+
   /**
-   * 2. Clear All Items Action
-   * Triggered when clicking the "Clear all" button in the header.
-   * Drop all cart data via an asynchronous server side call.
+   * Pull-to-Refresh Action
+   */
+  const handleOnRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchAllUserCart();
+    setIsRefreshing(false);
+  };
+
+  /**
+   * Clear All Items Action - FIXED to use DELETE /cart/clear
    */
   const handleClearAllCart = async () => {
-    if (cartItems.length === 0 || isClearing) return;
+    if (cartItems.length === 0 || isClearing || !token) return;
     setIsClearing(true);
     
     try {
-      console.log("Sending bulk API instruction to delete all items inside cart...");
+      const response = await axios.delete(`${process.env.EXPO_PUBLIC_API_URL}/cart/clear`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      // Simulating bulk backend deletion processing lag (1.5 seconds)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // PLACE YOUR BACKEND API CLEAR ALL LOGIC HERE:
-      // await axios.delete('/api/cart/clear-all');
-      
-      // Clear local array state on server success confirmation
-      setCartItems([]);
-      setCartTotals({ subtotal: 0, deliveryFee: 0, totalAmount: 0, totalQuantity: 0 });
+      if (response.data.success || response.data.Success) {
+        setCartItems([]);
+        setCartTotals({ subtotal: 0, deliveryFee: 0, totalAmount: 0, totalQuantity: 0 });
+        console.log("All products cleared successfully");
+      }
     } catch (error) {
       console.error("Failed to empty cart layout on server side:", error);
     } finally {
@@ -329,15 +138,14 @@ export default function CartScreen() {
   };
 
   /**
-   * 3. Local Quantity Counter Adjustments
-   * Mutates local structural array fields prior to pushing formal server-side save payloads.
+   * Local Quantity Counter Adjustments
    */
   const updateQuantity = (id, action) => {
     setCartItems(prevItems =>
       prevItems.map(item => {
-        if (item.id === id) {
-          const newQty = action === 'increase' ? item.quantity + 1 : item.quantity - 1;
-          return newQty > 0 ? { ...item, quantity: newQty } : item;
+        if (item.ID === id) {
+          const newQty = action === 'increase' ? item.Quantity + 1 : item.Quantity - 1;
+          return newQty > 0 ? { ...item, Quantity: newQty } : item;
         }
         return item;
       })
@@ -345,33 +153,37 @@ export default function CartScreen() {
   };
 
   /**
-   * 4. Row Removal Request Stage
-   * Opens the danger-themed red verification modal context.
+   * Row Removal Request Stage
    */
   const requestDeleteConfirm = (id) => {
     setItemToDelete(id);
   };
 
   /**
-   * 5. Destructive Item Dropping Endpoint Execution
-   * Fired inside the red validation warning modal when the user commits to clearing the entry.
+   * Single Item Deletion - FIXED to use DELETE verb with data payload configuration
    */
   const handleConfirmDelete = async () => {
-    if (!itemToDelete) return;
+    if (!itemToDelete || !token) return;
     setIsDeleting(true);
 
     try {
-      console.log('Sending API instruction to remove item:', itemToDelete);
+      const targetItem = cartItems.find(item => item.ID === itemToDelete);
+      if (!targetItem) return;
+
+      // Axios requires a 'data' property configuration context when sending bodies via DELETE methods
+      const response = await axios.delete(`${process.env.EXPO_PUBLIC_API_URL}/cart/remove`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: {
+          productIDs: [targetItem.ProductID]
+        }
+      });
       
-      // Simulating server dropping processing delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // PLACE YOUR BACKEND DELETE CALL HERE:
-      // const response = await axios.delete(`/api/cart/${itemToDelete}`);
-      // setCartTotals(response.data.newTotals);
-      
-      setCartItems(prevItems => prevItems.filter(item => item.id !== itemToDelete));
-      setItemToDelete(null); // Safely collapse modal viewport
+      if (response.data.success || response.data.Success) {
+        console.log("Product deleted successfully");
+        setCartItems(prevItems => prevItems.filter(item => item.ID !== itemToDelete));
+        setItemToDelete(null);
+        fetchAllUserCart(); 
+      }
     } catch (error) {
       console.error("Failed removing item on server:", error);
     } finally {
@@ -380,22 +192,27 @@ export default function CartScreen() {
   };
 
   /**
-   * 6. Quantity Metric Server Ingestion Synchronization
-   * Executed when saving modifications to a row item's configuration properties.
+   * Quantity Metric Server Ingestion Synchronization
    */
   const saveItemToServer = async (id) => {
+    if (!token) return;
     setSavingItemIds(prev => ({ ...prev, [id]: true }));
     try {
-      const targetedItem = cartItems.find(item => item.id === id);
-      console.log("Sending updated row quantity properties to backend server:", targetedItem);
+      const targetedItem = cartItems.find(item => item.ID === id);
+      if (!targetedItem) return;
 
-      // Simulating standard API response processing lag
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const response = await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/cart/update`, {
+        productID: targetedItem.ProductID,
+        quantity: targetedItem.Quantity,
+        variantID: targetedItem.VariantID, 
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      // PLACE YOUR BACKEND UPDATE CALL HERE:
-      // const response = await axios.put(`/api/cart/${id}`, { quantity: targetedItem.quantity });
-      // setCartTotals(response.data.newTotals);
-
+      if (response.data.success || response.data.Success) {
+        console.log("Product updated successfully");
+        fetchAllUserCart(); 
+      }
     } catch (error) {
       console.error("Failed updating server details:", error);
     } finally {
@@ -403,9 +220,6 @@ export default function CartScreen() {
     }
   };
 
-  /**
-   * Formatting Utility Helper
-   */
   const formatCurrency = (amount) => {
     return `₦${(amount || 0).toLocaleString()}`;
   };
@@ -423,7 +237,6 @@ export default function CartScreen() {
           </View>
         </View>
         
-        {/* Clear All action text layout handler */}
         <TouchableOpacity 
           onPress={handleClearAllCart} 
           disabled={isClearing || cartItems.length === 0}
@@ -442,17 +255,16 @@ export default function CartScreen() {
       {/* CART ITEMS LIST */}
       <FlatList
         data={cartItems}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.ID}
         contentContainerStyle={{ padding: 16, paddingBottom: 220 }}
         showsVerticalScrollIndicator={false}
         
-        // REFRESH CONTROL HOOK: Standard layout component handling user swipe gestures
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleOnRefresh}
-            tintColor="#000000"     // iOS spinner color representation
-            colors={["#000000"]}    // Android spinner color cycle mappings
+            tintColor="#000000"     
+            colors={["#000000"]}    
           />
         }
         
@@ -465,29 +277,28 @@ export default function CartScreen() {
           </View>
         }
         renderItem={({ item }) => {
-          const isItemSaving = !!savingItemIds[item.id];
+          const isItemSaving = !!savingItemIds[item.ID];
 
           return (
             <View className="flex-row bg-white border border-gray-100 rounded-2xl p-3 mb-4 items-center">
-              {/* Image thumbnail wrap container */}
               <View className="w-20 h-24 bg-gray-50 rounded-xl overflow-hidden">
-                {item.image ? (
-                  <Image source={{ uri: item.image }} className="w-full h-full object-cover" />
+                {item.ImageUrl ? (
+                  <Image source={{ uri: item.ImageUrl }} className="w-full h-full object-cover" />
                 ) : (
                   <ImagePlaceholder />
                 )}
               </View>
 
-              {/* Text contextual area */}
               <View className="flex-1 ml-4 justify-between h-24 py-0.5">
                 <View>
                   <View className="flex-row justify-between items-start">
-                    <Text className="text-xs text-gray-400 font-bold uppercase tracking-wider">{item.category}</Text>
+                    <Text className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                      {item.VariantLabel || 'Item'}
+                    </Text>
                     
                     <View className="flex-row items-center space-x-1">
-                      {/* Save Button */}
                       <TouchableOpacity 
-                        onPress={() => saveItemToServer(item.id)} 
+                        onPress={() => saveItemToServer(item.ID)} 
                         disabled={isItemSaving}
                         className="p-1 -mt-1"
                       >
@@ -498,31 +309,29 @@ export default function CartScreen() {
                         )}
                       </TouchableOpacity>
 
-                      {/* Delete Button */}
-                      <TouchableOpacity onPress={() => requestDeleteConfirm(item.id)} className="p-1 -mt-1 -mr-1">
+                      <TouchableOpacity onPress={() => requestDeleteConfirm(item.ID)} className="p-1 -mt-1 -mr-1">
                         <Ionicons name="trash-outline" size={16} color="#9CA3AF" />
                       </TouchableOpacity>
                     </View>
                   </View>
                   <Text className="text-sm font-bold text-black tracking-tight mt-0.5" numberOfLines={1}>
-                    {item.name}
+                    {item.ProductName}
                   </Text>
                 </View>
 
-                {/* Price and Counter Component Control Row */}
                 <View className="flex-row justify-between items-center mt-2">
-                  <Text className="text-sm font-black text-black">{formatCurrency(item.price)}</Text>
+                  <Text className="text-sm font-black text-black">{formatCurrency(item.Rate)}</Text>
                   
                   <View className="flex-row items-center bg-gray-100 rounded-lg px-1 py-1">
                     <TouchableOpacity 
-                      onPress={() => updateQuantity(item.id, 'decrease')} 
+                      onPress={() => updateQuantity(item.ID, 'decrease')} 
                       className="p-1 bg-white rounded shadow-xs"
                     >
                       <Feather name="minus" size={12} color="black" />
                     </TouchableOpacity>
-                    <Text className="text-xs font-black text-black px-3">{item.quantity}</Text>
+                    <Text className="text-xs font-black text-black px-3">{item.Quantity}</Text>
                     <TouchableOpacity 
-                      onPress={() => updateQuantity(item.id, 'increase')} 
+                      onPress={() => updateQuantity(item.ID, 'increase')} 
                       className="p-1 bg-white rounded shadow-xs"
                     >
                       <Feather name="plus" size={12} color="black" />
@@ -554,14 +363,20 @@ export default function CartScreen() {
             <Text className="text-base font-black text-black">{formatCurrency(cartTotals.totalAmount)}</Text>
           </View>
 
-          <TouchableOpacity onPress={() => router.push('/checkout')} className="bg-black w-full py-4 rounded-xl flex-row justify-center items-center active:opacity-90">
+          <TouchableOpacity           
+                        onPress={() => router.push({ 
+                          pathname: "/checkout",
+                          params: { tatalAmount : cartTotals.totalAmount } // Passing the total cart amount to the checkout page 
+                        })}
+                        
+              className="bg-black w-full py-4 rounded-xl flex-row justify-center items-center active:opacity-90">
             <Text className="text-white text-xs font-black tracking-widest uppercase mr-2">Proceed to checkout</Text>
             <Feather name="arrow-right" size={14} color="white" />
           </TouchableOpacity>
         </View>
       )}
 
-      {/* FIXED RED CONFIRM DELETE MODAL */}
+      {/* CONFIRM DELETE MODAL */}
       <Modal
         visible={!!itemToDelete}
         transparent={true}
@@ -570,10 +385,8 @@ export default function CartScreen() {
       >
         <View className="flex-1 bg-black/50 justify-center items-center p-6">
           <View className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-red-100">
-            {/* Top warning line strip accent */}
             <View className="bg-red-600 h-1.5 w-full" />
             
-            {/* Fully Native React Native View Component Body Wrapper */}
             <View className="p-6">
               <View className="flex-row items-center mb-2">
                 <View className="bg-red-50 p-2 rounded-full mr-2.5">
@@ -586,9 +399,7 @@ export default function CartScreen() {
                 Are you sure you want to remove this item? This action will sync with your account and cannot be undone.
               </Text>
 
-              {/* Modal Confirmation Action Tray */}
               <View className="flex-row justify-end items-center mt-6 space-x-2">
-                {/* Cancel Trigger Button */}
                 <TouchableOpacity 
                   onPress={() => setItemToDelete(null)}
                   disabled={isDeleting}
@@ -597,7 +408,6 @@ export default function CartScreen() {
                   <Text className="text-xs font-bold text-gray-600 uppercase tracking-wider">Cancel</Text>
                 </TouchableOpacity>
 
-                {/* Destructive Executing Confirm Button */}
                 <TouchableOpacity 
                   onPress={handleConfirmDelete}
                   disabled={isDeleting}

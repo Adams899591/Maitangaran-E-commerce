@@ -132,6 +132,19 @@ export default function DrawerLayout() {
         />
 
         <Drawer.Screen
+          name="change-password"
+          options={{
+            drawerLabel: 'Change Password',
+            title: 'Change Password',
+            // This dynamically hides the row item from the sidebar menu if user is falsey
+            drawerItemStyle: { display: user ? 'flex' : 'none' },
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="lock-closed-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        <Drawer.Screen
           name="about-us"
           options={{
             drawerLabel: 'About Us',
@@ -158,6 +171,7 @@ export default function DrawerLayout() {
         <Drawer.Screen name="single-product" options={{ drawerItemStyle: { display: "none" } }} />
         <Drawer.Screen name="checkout" options={{ drawerItemStyle: { display: "none" } }} />
         <Drawer.Screen name="order-details" options={{ drawerItemStyle: { display: "none" } }} />
+        <Drawer.Screen name="success" options={{ drawerItemStyle: { display: "none" } }} />
       </Drawer>
     </GestureHandlerRootView>
   );
