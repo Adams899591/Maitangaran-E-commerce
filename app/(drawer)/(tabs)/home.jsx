@@ -10,7 +10,7 @@ import CategorySlider from "../../components/Home/CategorySlider";
 import CategoryShowcase from "../../components/Home/CategoryShowcase";
 import FeaturedProducts from "../../components/Home/FeaturedProducts";
 import TrendingNow from "../../components/Home/TrendingNow";
-import NewArrivals from "../../components/Home/NewArrivals";
+import OurProducts from "../../components/Home/OurProducts";
 
 
 const { width } = Dimensions.get('window');
@@ -118,7 +118,7 @@ export default function HomeScreen() {
 
 
         {/* 6. Real-time New Arrivals */}
-        <NewArrivals
+        <OurProducts
           EmptySectionState={EmptySectionState}
           ImagePlaceholder={ImagePlaceholder}
         />

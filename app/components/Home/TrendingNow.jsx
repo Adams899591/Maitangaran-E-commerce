@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -13,6 +13,28 @@ const TRENDING_NOW = [
 
 export default function TrendingNow({ SectionHeader, EmptySectionState, ImagePlaceholder }) {
   const router = useRouter();
+
+
+
+  //  useEffect(() => {
+  //    const fetchTrendingNow =  async () => {
+  //           try {
+              
+  //           } catch (error) {
+  //             console.log(error);
+              
+  //           } 
+  //     }
+   
+  //     fetchTrendingNow();
+  //  }, [])
+   
+
+
+
+
+
+
 
   if (TRENDING_NOW.length === 0) {
     return <EmptySectionState heightClass="h-52" message="Trending inventory parameters are currently updating." />;

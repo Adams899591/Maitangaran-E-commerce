@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -14,19 +14,33 @@ import {
   ActivityIndicator,
   Alert
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { UserContext } from '../context/UserContext';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ProfileScreen() {
+  const { user, setUser } = useContext(UserContext);
+
+  const userData = user?.Customer; // break the user Customer so that it can be accessable easily
+
+
+
+
   // Local state initialized with your exact API schema fields
-  const [customerName, setCustomerName] = useState('Jane Doe');
-  const [email, setEmail] = useState('jane.doe@example.com');
-  const [phone, setPhone] = useState('+2348012345678');
-  const [address, setAddress] = useState('42 Marina Road, Lagos');
-  const [address2, setAddress2] = useState('Suite 12B');
-  const [prefferedAddress, setPrefferedAddress] = useState('42 Marina Road');
-  const [prefferedState, setPrefferedState] = useState('Lagos');
+  const [customerName, setCustomerName] = useState(userData?.CustomerName);
+  const [email, setEmail] = useState(userData?.Email);
+  const [phone, setPhone] = useState(userData?.Phone);
+  const [address, setAddress] = useState(userData?.Address);
+  const [address2, setAddress2] = useState(userData?.Address2);
+  const [prefferedAddress, setPrefferedAddress] = useState(userData?.PrefferedAddress);
+  const [prefferedState, setPrefferedState] = useState(userData?.PrefferedState);
+  const [token, setToken] = useState(user?.Token); // pass the user token here so that after firat update the token still stay
   
   const [isLoading, setIsLoading] = useState(false);
+  // Design tip: Keep message states clean
+  const [errorMessage, setErrorMessage] = useState(""); 
+  const [successMessage, setSuccessMessage] = useState(""); 
 
   // Validation Logic: Stays disabled if key tracking or contact fields are blank
   const isFormValid = 
@@ -36,24 +50,92 @@ export default function ProfileScreen() {
     address.trim() !== '' &&
     !isLoading;
 
-  const handleUpdateProfile = () => {
+  // Function to Update User Profile
+  const handleUpdateProfile = async () => {
     if (!isFormValid) return;
     
+  // Clear any existing banners when a new attempt starts
+    setErrorMessage("");
+    setSuccessMessage("");
     setIsLoading(true);
-    
-    // Simulating API registration profile payload save
-    setTimeout(() => {
-      setIsLoading(false);
-      Alert.alert("Success", "Profile information updated successfully!");
-      console.log('Profile Save Success', { 
-        customerName, email, phone, address, address2, prefferedAddress, prefferedState 
+
+    try {
+      const response = await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/auth/profile/update`, {
+          customerName: customerName,
+          email: email,
+          phone: phone,
+          address: address, 
+          address2: address2,
+          prefferedAddress: prefferedAddress,
+          prefferedState: prefferedState,
+      },{
+          headers: {
+              // This tells the backend exactly who is making the request
+              Authorization: `Bearer ${token}` 
+          }
       });
-    }, 2000);
+
+      const data = response.data;
+      console.log(JSON.stringify(data, null, 2));
+
+
+      if (data.Success === true) {
+        setSuccessMessage("User details updated successfuly ");
+
+        await AsyncStorage.setItem('user', JSON.stringify(data.Data));
+        setUser(data.Data);
+        
+        
+        // Optional delay to let them see the pretty success banner
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 3000);
+      } else {
+        setErrorMessage(data.Message || "Unable to update user details");
+      }
+    } catch (error) {
+      console.log(error);
+      setErrorMessage("Something went wrong. Please check your network connectivity.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+
+
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+     <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+
+      {/*  
+        PROFESSIONAL TOP BANNER PLACEMENT 
+        Placed completely outside the main scrolling wrapper so it expands flawlessly edge-to-edge
+      */}
+      {errorMessage ? (
+        <View className="bg-red-50 border-b border-red-100 px-6 py-3.5 flex-row items-center space-x-3">
+          <Ionicons name="alert-circle" size={20} color="#dc2626" />
+          <Text className="text-red-700 font-medium text-sm flex-1 leading-4">
+            {errorMessage}
+          </Text>
+          <TouchableOpacity onPress={() => setErrorMessage("")}>
+            <Feather name="x" size={16} color="#9ca3af" />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      {successMessage ? (
+        <View className="bg-emerald-50 border-b border-emerald-100 px-6 py-3.5 flex-row items-center space-x-3">
+          <Ionicons name="checkmark-circle" size={20} color="#059669" />
+          <Text className="text-emerald-700 font-medium text-sm flex-1 leading-4">
+            {successMessage}
+          </Text>
+          <TouchableOpacity onPress={() => setSuccessMessage("")}>
+            <Feather name="x" size={16} color="#9ca3af" />
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
@@ -220,3 +302,5 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
+
+

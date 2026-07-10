@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   View,
   Text,
@@ -7,22 +7,25 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  Dimensions
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Feather, Ionicons } from '@expo/vector-icons'; 
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
 
-// Related products data pool
+// Related products data pool (Left unchanged as requested)
 const RELATED_PRODUCTS_DATA = [
   { id: 'r1', name: 'Classic Leather Derby', price: '₦120,000', image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=500' },
   { id: 'r2', name: 'Minimalist Chrono Watch', price: '₦195,000', image: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=500' },
-  { id: 'r3', name: 'Premium Leather Bomber', price: '₦299,000', image: '' }, // Testing fallback placeholder here
+  { id: 'r3', name: 'Premium Leather Bomber', price: '₦299,000', image: '' }, 
   { id: 'r4', name: 'Acetate Sunglasses', price: '₦65,000', image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500' },
 ];
 
-// Global Image Placeholder Component
+
+//  Function to handle if they is no image =>     No image uploaded
 function ImagePlaceholder({ heightClass = "h-40" }) {
   return (
     <View className={`w-full ${heightClass} bg-gray-100 items-center justify-center rounded-xl`}>
@@ -32,57 +35,92 @@ function ImagePlaceholder({ heightClass = "h-40" }) {
   );
 }
 
-export default function SingleProductScreen({ route, navigation }) {
-  // Simulating the dynamic backend data payload received from your database
-  const productData = {
-    "id": "productId001",
-    "productName": "Wireless Bluetooth Headset",
-    "description": "Premium noise-cancelling over-ear headphones with deep bass response, memory foam ear cups, and adaptive ambient listening modes perfect for travel or studio monitoring.",
-    "onlineRate": 45000.0,
-    "sellingPrice": 50000.0,
-    "percentOff": 10.0,
-    "largeImage": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800",
-    "smallImage": "/uploads/products/headset_small.jpg",
-    "category": "Electronics",
-    "units": "Pieces",
-    "stockLevel": 25,
-    "status": "Active",
-    "activeStatus": "Active",
-    "features": "Noise Cancelling, Bluetooth 5.3, 30h Battery",
-    "barCode": "BARCODE123456789",
-    "variants": [
-      { "id": "variantId001", "attribute": "Color", "value": "Midnight Black", "rate": 45000.0, "onlineRate": 45000.0, "qty": 10, "stockLevel": 10 },
-      { "id": "variantId002", "attribute": "Color", "value": "Platinum Silver", "rate": 45000.0, "onlineRate": 45000.0, "qty": 8, "stockLevel": 8 },
-      { "id": "variantId003", "attribute": "Color", "value": "Alpine Green", "rate": 47000.0, "onlineRate": 47000.0, "qty": 7, "stockLevel": 7 }
-    ]
-  };
-
+export default function SingleProductScreen() {
   const router = useRouter();
-  const [selectedVariant, setSelectedVariant] = useState(productData.variants[0]);
+  const { id } = useLocalSearchParams();  // get the id that was passed
+
+  // --- Dynamic State Management ---
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  const featuresList = productData.features.split(',').map(item => item.trim());
+
+  // Function to fetch Single Product By Id based on the passed id 
+  useEffect(() => {
+    const fetchSingleProductById = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/products/${id}`);
+        const res = response.data;
+        console.log(JSON.stringify(res, null, 2));
+        
+        if (res && res.Success && res.Data) {
+          setProduct(res.Data);
+          // Auto-selects first variant instantly on page enter
+          if (res.Data.Variants && res.Data.Variants.length > 0) {
+            setSelectedVariant(res.Data.Variants[0]);
+          } else {
+            setSelectedVariant(null);
+          }
+        }
+      } catch (error) {
+        console.log("Error fetching single product:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSingleProductById();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#000000" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!product) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+        <Text className="text-gray-500 font-bold">Product not found</Text>
+      </SafeAreaView>
+    );
+  }
+
+  const featuresList = product.Features 
+    ? product.Features.split(',').map(item => item.trim()) 
+    : [];
+
+  // FIXED: Case-insensitive dynamic state parsing based on your API key payload structure
+  const currentPrice = selectedVariant ? selectedVariant.OnlineRate : product.OnlineRate;
+  const currentStock = selectedVariant 
+    ? (selectedVariant.StockLevel !== null ? selectedVariant.StockLevel : selectedVariant.Qty) 
+    : product.StockLevel;
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-     <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         
         {/* PRODUCT LARGE IMAGE VIEW */}
         <View style={{ width: width }} className="h-96 bg-gray-50 relative justify-center items-center">
-          {productData.largeImage ? (
+          {product.LargeImage ? (
             <Image 
-              source={{ uri: productData.largeImage }} 
+              source={{ uri: product.LargeImage }} 
               className="w-full h-full" 
               resizeMode="cover" 
             />
           ) : (
             <ImagePlaceholder heightClass="h-96" />
           )}
-          {productData.percentOff > 0 && productData.largeImage && (
+          {product.PercentOff > 0 && product.LargeImage && (
             <View className="absolute top-4 left-4 bg-black px-3 py-1 rounded-full">
-              <Text className="text-white text-[10px] font-black tracking-wider">{productData.percentOff}% OFF</Text>
+              <Text className="text-white text-[10px] font-black tracking-wider">{product.PercentOff}% OFF</Text>
             </View>
           )}
         </View>
@@ -90,16 +128,15 @@ export default function SingleProductScreen({ route, navigation }) {
         {/* CORE DETAILS CONTAINER */}
         <View className="p-4 mt-2">
           
-          {/* Title and Pricing Information */}
-          <Text className="text-2xl font-black text-black tracking-tight leading-7">{productData.productName}</Text>
+          <Text className="text-2xl font-black text-black tracking-tight leading-7">{product.ProductName}</Text>
           
           <View className="flex-row items-baseline mt-3">
             <Text className="text-2xl font-black text-black">
-              ₦{selectedVariant ? selectedVariant.onlineRate.toLocaleString() : productData.onlineRate.toLocaleString()}
+              ₦{currentPrice?.toLocaleString()}
             </Text>
-            {productData.sellingPrice > productData.onlineRate && (
-              <Text className="text-sm text-gray-400 line-through ml-2.5 font-medium">
-                ₦{productData.sellingPrice.toLocaleString()}
+            {product.SellingPrice > currentPrice && (
+              <Text className="text-sm text-red-400 line-through ml-2.5 font-medium">
+                ₦{product.SellingPrice.toLocaleString()}
               </Text>
             )}
           </View>
@@ -107,24 +144,26 @@ export default function SingleProductScreen({ route, navigation }) {
           <View className="w-full h-[1px] bg-gray-100 my-5" />
 
           {/* DYNAMIC VARIANT PICKER SECTION */}
-          {productData.variants && productData.variants.length > 0 && (
+          {product.Variants && product.Variants.length > 0 && (
             <View className="mb-5">
               <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-3">
-                Select {productData.variants[0].attribute}
+                Select Option
               </Text>
               <View className="flex-row flex-wrap">
-                {productData.variants.map((variant) => {
-                  const isSelected = selectedVariant.id === variant.id;
+                {product.Variants.map((variant, index) => {
+                  // FIXED: Matched uppercase property 'ID' to reflect the correct payload layout
+                  const isSelected = selectedVariant?.ID === variant.ID;
                   return (
                     <TouchableOpacity
-                      key={variant.id}
+                      key={variant.ID || index}
                       onPress={() => setSelectedVariant(variant)}
                       className={`px-4 py-2.5 rounded-xl border mr-2 mb-2 transition-all flex-row items-center ${
                         isSelected ? 'bg-black border-black' : 'bg-white border-gray-200'
                       }`}
                     >
+                      {/* FIXED: Reading from 'Attribute' since 'Value' evaluates to null */}
                       <Text className={`text-xs font-bold tracking-tight ${isSelected ? 'text-white' : 'text-gray-800'}`}>
-                        {variant.value}
+                        {variant.Attribute}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -134,73 +173,63 @@ export default function SingleProductScreen({ route, navigation }) {
           )}
 
           {/* PRODUCT SPECIFICATIONS / FEATURES TAGS */}
-          <View className="mb-5">
-            <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-3">Highlights</Text>
-            <View className="flex-row flex-wrap">
-              {featuresList.map((feature, idx) => (
-                <View key={idx} className="bg-gray-100 px-3 py-1.5 rounded-lg mr-2 mb-2 flex-row items-center">
-                  <Ionicons name="checkmark-circle-outline" size={13} color="black" />
-                  <Text className="text-xs text-gray-700 font-semibold ml-1">{feature}</Text>
-                </View>
-              ))}
+          {featuresList.length > 0 && (
+            <View className="mb-5">
+              <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-3">Highlights</Text>
+              <View className="flex-row flex-wrap">
+                {featuresList.map((feature, idx) => (
+                  <View key={idx} className="bg-gray-100 px-3 py-1.5 rounded-lg mr-2 mb-2 flex-row items-center">
+                    <Ionicons name="checkmark-circle-outline" size={13} color="black" />
+                    <Text className="text-xs text-gray-700 font-semibold ml-1">{feature}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
+          )}
 
           {/* PRODUCT DESCRIPTION SECTION */}
           <View className="mb-5">
             <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-2">Description</Text>
             <Text className="text-sm text-gray-600 font-normal leading-5 tracking-tight">
-              {productData.description}
+              {product.Description || 'No description provided.'}
             </Text>
           </View>
 
-          {/* METADATA INFO PILLS (STOCK LEVEL & BARCODE) */}
+          {/* METADATA INFO PILLS */}
           <View className="bg-gray-50 p-3.5 rounded-2xl border border-gray-100 flex-row justify-between items-center mt-2">
             <View>
               <Text className="text-[10px] font-black tracking-wider text-gray-400 uppercase">Availability</Text>
               <Text className="text-xs font-bold text-black mt-0.5">
-                {selectedVariant.stockLevel > 0 ? `${selectedVariant.stockLevel} ${productData.units} Left In Stock` : 'Out of Stock'}
+                {currentStock > 0 ? `${currentStock} ${product.Units || 'Units'} Left In Stock` : 'Out of Stock'}
               </Text>
             </View>
             <View className="items-end">
               <Text className="text-[10px] font-black tracking-wider text-gray-400 uppercase">SKU / Code</Text>
-              <Text className="text-xs font-medium text-gray-500 mt-0.5">{productData.barCode}</Text>
+              <Text className="text-xs font-medium text-gray-500 mt-0.5">{product.BarCode || 'N/A'}</Text>
             </View>
           </View>
         </View>
 
-        {/* HORIZONTAL RELATED PRODUCTS CAROUSEL SECTION */}
+        {/* RELATED PRODUCTS SECTION */}
         <View className="mt-8">
           <View className="flex-row justify-between items-center mb-4 px-4">
             <Text className="text-lg font-black tracking-tight text-black">RELATED PRODUCTS</Text>
             <TouchableOpacity><Text className="text-xs font-bold text-gray-500 tracking-wider">SEE ALL</Text></TouchableOpacity>
           </View>
           
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 16 }}
-          >
-            {RELATED_PRODUCTS_DATA.map((product) => (
-              <View 
-                key={product.id} 
-                style={{ width: width * 0.44 }} 
-                className="bg-white border border-gray-100 rounded-2xl overflow-hidden p-2 mr-4"
-              >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+            {RELATED_PRODUCTS_DATA.map((item) => (
+              <View key={item.id} style={{ width: width * 0.44 }} className="bg-white border border-gray-100 rounded-2xl overflow-hidden p-2 mr-4">
                 <View className="bg-gray-50 rounded-xl overflow-hidden">
-                  {product.image ? (
-                    <Image source={{ uri: product.image }} className="w-full h-40 object-cover" />
+                  {item.image ? (
+                    <Image source={{ uri: item.image }} className="w-full h-40 object-cover" />
                   ) : (
                     <ImagePlaceholder heightClass="h-40" />
                   )}
                 </View>
                 <View className="pt-2 px-1">
-                  <Text className="text-xs font-bold text-black tracking-tight" numberOfLines={1}>
-                    {product.name}
-                  </Text>
-                  <Text className="text-sm font-black text-black mt-1">
-                    {product.price}
-                  </Text>
+                  <Text className="text-xs font-bold text-black tracking-tight" numberOfLines={1}>{item.name}</Text>
+                  <Text className="text-sm font-black text-black mt-1">{item.price}</Text>
                 </View>
               </View>
             ))}
@@ -209,9 +238,8 @@ export default function SingleProductScreen({ route, navigation }) {
 
       </ScrollView>
 
-      {/* FLOATING ACTION BOTTOM ADD-TO-CART CONTROLS BAR */}
+      {/* FLOATING ACTION BOTTOM CONTROLS BAR */}
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 flex-row items-center justify-between shadow-lg">
-        {/* Counter controls */}
         <View className="flex-row items-center bg-gray-100 rounded-xl px-2 py-1.5">
           <TouchableOpacity 
             onPress={() => setQuantity(q => Math.max(1, q - 1))} 
@@ -221,24 +249,23 @@ export default function SingleProductScreen({ route, navigation }) {
           </TouchableOpacity>
           <Text className="text-sm font-black text-black px-4">{quantity}</Text>
           <TouchableOpacity 
-            onPress={() => setQuantity(q => Math.min(selectedVariant.stockLevel, q + 1))} 
+            onPress={() => setQuantity(q => Math.min(currentStock, q + 1))} 
             className="w-8 h-8 items-center justify-center bg-white rounded-lg shadow-sm"
           >
             <Feather name="plus" size={14} color="black" />
           </TouchableOpacity>
         </View>
 
-        {/* Action Button */}
         <TouchableOpacity 
           onPress={() => router.push("/cart")}
-          disabled={selectedVariant.stockLevel === 0}
+          disabled={currentStock === 0}
           className={`flex-1 ml-4 py-3.5 rounded-xl items-center justify-center flex-row shadow-sm ${
-            selectedVariant.stockLevel === 0 ? 'bg-gray-300' : 'bg-black'
+            currentStock === 0 ? 'bg-gray-300' : 'bg-black'
           }`}
         >
           <Feather name="shopping-cart" size={16} color="white" />
           <Text className="text-white font-black text-xs tracking-wider ml-2">
-            {selectedVariant.stockLevel === 0 ? 'OUT OF STOCK' : 'ADD TO Cart'}
+            {currentStock === 0 ? 'OUT OF STOCK' : 'ADD TO CART'}
           </Text>
         </TouchableOpacity>
       </View>

@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { UserContext } from '../context/UserContext';
 
 export default function UserDashboard() {
+  const { user, setUser } = useContext(UserContext);
   const router = useRouter();
+  console.log("Current User Data:", user);
+  
+
 
   const userProfile = {
-    name: "Alhaji Musa",
-    type: "Wholesale Partner",
+    name: user?.Customer?.CustomerName,
+    type: user?.Customer?.Email,
   };
 
   return (
