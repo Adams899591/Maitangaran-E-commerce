@@ -3,10 +3,12 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { UserContext } from '../context/UserContext';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function UserDashboard() {
   const { user, setUser } = useContext(UserContext);
   const router = useRouter();
+  const insets = useSafeAreaInsets(); 
   console.log("Current User Data:", user);
   
 
@@ -17,7 +19,7 @@ export default function UserDashboard() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-zinc-50" showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 24 }} className="flex-1 bg-zinc-50" showsVerticalScrollIndicator={false}>
       
       {/* PREMIUM WELCOME HERO BANNER */}
       <View 

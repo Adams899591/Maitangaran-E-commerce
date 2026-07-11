@@ -9,9 +9,11 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SuccessScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   // Safely extract the invoiceID passed from the Checkout screen params
   const { invoiceID } = useLocalSearchParams();
 
@@ -21,7 +23,7 @@ export default function SuccessScreen() {
       
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}
+        contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center', paddingBottom: insets.bottom + 24  }}
       >
         {/* SUCCESS ICON & HEADERS */}
         <View className="items-center my-auto">
@@ -36,27 +38,8 @@ export default function SuccessScreen() {
             Order Placed!
           </Text>
           <Text className="text-sm text-gray-500 font-medium text-center px-6 leading-5">
-            Your payment was processed successfully via Paystack. Your package will be on its way soon.
+                Your order was placed successfully! We'll start processing your package right away.
           </Text>
-
-          {/* INVOICE CARD INFO */}
-          {/* {invoiceID && (
-            <View className="bg-gray-50 border border-gray-100 rounded-2xl p-5 w-full mt-8 flex-row justify-between items-center">
-              <View>
-                <Text className="text-gray-400 text-[10px] font-black uppercase tracking-wider">
-                  Invoice Reference
-                </Text>
-                <Text className="text-black text-base font-bold mt-0.5 select-text">
-                  #{invoiceID}
-                </Text>
-              </View>
-              <View className="bg-zinc-200 px-2.5 py-1 rounded-md">
-                <Text className="text-zinc-700 text-[10px] font-bold uppercase tracking-wide">
-                  Not Paid
-                </Text>
-              </View>
-            </View>
-          )} */}
         </View>
 
         {/* BOTTOM BUTTONS AREA */}

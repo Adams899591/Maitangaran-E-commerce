@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react';
 import { 
   View, 
   Text, 
-  SafeAreaView, 
   StatusBar, 
   TextInput, 
   TouchableOpacity, 
@@ -10,20 +9,22 @@ import {
   Platform, 
   TouchableWithoutFeedback,
   Keyboard,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView // Imported correctly from react-native
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 import { UserContext } from '../context/UserContext';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets(); 
     
   const { user } = useContext(UserContext);
   const token = user?.Token; 
   
-  // State variables matching your structure
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,7 +37,6 @@ export default function ChangePasswordScreen() {
   const [errorMessage, setErrorMessage] = useState(""); 
   const [successMessage, setSuccessMessage] = useState(""); 
 
-  // Validation checking matching passwords and non-empty inputs
   const isFormValid = 
     oldPassword.trim() !== '' && 
     newPassword.trim() !== '' && 
@@ -49,7 +49,6 @@ export default function ChangePasswordScreen() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    // Client-side validation check
     if (newPassword !== confirmPassword) {
       setErrorMessage("New passwords do not match.");
       return;
@@ -58,31 +57,27 @@ export default function ChangePasswordScreen() {
     setIsLoading(true);
 
     try {
-      // Utilizing the PUT endpoint provided
       const response = await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/auth/change-password`, {
         oldPassword: oldPassword,
         newPassword: newPassword,
       },{
           headers: {
-              // This tells the backend exactly who is making the request
               Authorization: `Bearer ${token}` 
           }
       });
 
       const data = response.data;
 
-      // Handling response mapping back to your API specification
       if (data.success === true || data.Success === true) {
         setSuccessMessage(data.message || "Password changed successfully!");
         
-        // Optional delay to let them see the pretty success banner before routing back
         setTimeout(() => {
           setOldPassword("");
           setNewPassword("");
           setConfirmPassword("");
           setSuccessMessage("");
           setErrorMessage("");
-          router.back(); // Take them back to their previous screen (e.g., Settings/Profile)
+          router.back();
         }, 2500);
       } else {
         setErrorMessage(data.message || "Failed to change password. Please verify your current password.");
@@ -97,44 +92,52 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      className="flex-1 bg-white"
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View className="flex-1">
+          
+          {/* EDGE-TO-EDGE ERROR BANNER */}
+          {errorMessage ? (
+            <View style={{ paddingTop: insets.top + 12 }} className="bg-red-50 border-b border-red-100 px-6 pb-3.5 flex-row items-center space-x-3">
+              <Ionicons name="alert-circle" size={20} color="#dc2626" />
+              <Text className="text-red-700 font-medium text-sm flex-1 leading-4">
+                {errorMessage}
+              </Text>
+              <TouchableOpacity onPress={() => setErrorMessage("")}>
+                <Feather name="x" size={16} color="#9ca3af" />
+              </TouchableOpacity>
+            </View>
+          ) : null}
 
-      {/* EDGE-TO-EDGE ERROR BANNER */}
-      {errorMessage ? (
-        <View className="bg-red-50 border-b border-red-100 px-6 py-3.5 flex-row items-center space-x-3">
-          <Ionicons name="alert-circle" size={20} color="#dc2626" />
-          <Text className="text-red-700 font-medium text-sm flex-1 leading-4">
-            {errorMessage}
-          </Text>
-          <TouchableOpacity onPress={() => setErrorMessage("")}>
-            <Feather name="x" size={16} color="#9ca3af" />
-          </TouchableOpacity>
-        </View>
-      ) : null}
+          {/* EDGE-TO-EDGE SUCCESS BANNER */}
+          {successMessage ? (
+            <View style={{ paddingTop: insets.top + 12 }} className="bg-emerald-50 border-b border-emerald-100 px-6 pb-3.5 flex-row items-center space-x-3">
+              <Ionicons name="checkmark-circle" size={20} color="#059669" />
+              <Text className="text-emerald-700 font-medium text-sm flex-1 leading-4">
+                {successMessage}
+              </Text>
+              <TouchableOpacity onPress={() => setSuccessMessage("")}>
+                <Feather name="x" size={16} color="#9ca3af" />
+              </TouchableOpacity>
+            </View>
+          ) : null}
 
-      {/* EDGE-TO-EDGE SUCCESS BANNER */}
-      {successMessage ? (
-        <View className="bg-emerald-50 border-b border-emerald-100 px-6 py-3.5 flex-row items-center space-x-3">
-          <Ionicons name="checkmark-circle" size={20} color="#059669" />
-          <Text className="text-emerald-700 font-medium text-sm flex-1 leading-4">
-            {successMessage}
-          </Text>
-          <TouchableOpacity onPress={() => setSuccessMessage("")}>
-            <Feather name="x" size={16} color="#9ca3af" />
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-        className="flex-1"
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View className="flex-1 p-6 justify-start">
-            
+          {/* SCROLLABLE INTERFACE */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{
+              paddingTop: errorMessage || successMessage ? 12 : insets.top + 24,
+              paddingBottom: insets.bottom + 24,
+              paddingHorizontal: 24,
+              flexGrow: 1
+            }}
+          >
             {/* INPUT FIELDS CONTAINER */}
-            <View className="mt-8">
+            <View className="mt-4">
               <Text className="text-3xl font-black tracking-tighter text-black mb-1">Update Password</Text>
               <Text className="text-xs text-gray-400 font-medium mb-8">Ensure your account stays secure by using a strong password.</Text>
 
@@ -206,7 +209,7 @@ export default function ChangePasswordScreen() {
             </View>
 
             {/* ACTION CONTAINER */}
-            <View className="mt-2">
+            <View className="mt-auto pb-4">
               <TouchableOpacity 
                 onPress={handleChangePassword}
                 disabled={!isFormValid}
@@ -220,11 +223,7 @@ export default function ChangePasswordScreen() {
                     <Text className="text-xs font-black tracking-widest uppercase text-white">Updating...</Text>
                   </View>
                 ) : (
-                  <Text 
-                    className={`text-xs font-black tracking-widest uppercase ${
-                      isFormValid ? 'text-white' : 'text-gray-400'
-                    }`}
-                  >
+                  <Text className={`text-xs font-black tracking-widest uppercase ${isFormValid ? 'text-white' : 'text-gray-400'}`}>
                     Save Changes
                   </Text>
                 )}
@@ -237,9 +236,9 @@ export default function ChangePasswordScreen() {
               </View>
             </View>
 
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }

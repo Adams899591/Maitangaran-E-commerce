@@ -11,6 +11,7 @@ import CategoryShowcase from "../../components/Home/CategoryShowcase";
 import FeaturedProducts from "../../components/Home/FeaturedProducts";
 import TrendingNow from "../../components/Home/TrendingNow";
 import OurProducts from "../../components/Home/OurProducts";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // 1. Import hook
 
 
 const { width } = Dimensions.get('window');
@@ -60,72 +61,72 @@ function ImagePlaceholder({ heightClass = "h-44" }) {
 
 export default function HomeScreen() {
   const [searchText, setSearchText] = useState('');
+  const insets = useSafeAreaInsets(); // 2. Initialize insets
   const [selectedCategory, setSelectedCategory] = useState(null);
 
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
+          
+          {/*1. Sticky-Style Search Bar */}
+          <HomeSearchBar
+              setSearchText={setSearchText}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              searchText={searchText}
+          />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-        
-        {/*1. Sticky-Style Search Bar */}
-        <HomeSearchBar
-            setSearchText={setSearchText}
+
+          {/* 2. Promotional Banners Carousel */}
+          <PromotionalBanners
+            EmptySectionState={EmptySectionState}
+            ImagePlaceholder={ImagePlaceholder}
+          />
+
+
+          {/* 3. Categories Slider */}
+          <CategorySlider
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
+            setSearchText={setSearchText}
+            SectionHeaderComponent={SectionHeader}
+            EmptySectionStateComponent={EmptySectionState}
+          />
+
+          {/* 3.5 Standalone Section: Category Item Showcases */}
+          <CategoryShowcase
             searchText={searchText}
-        />
+            selectedCategory={selectedCategory}
+            EmptySectionState={EmptySectionState}
+            ImagePlaceholder={ImagePlaceholder}
+          />
+
+          {/*4. Featured Product */}
+          <FeaturedProducts 
+            SectionHeader={SectionHeader}
+            EmptySectionState={EmptySectionState}
+            ImagePlaceholder={ImagePlaceholder}
+          />
+
+          {/* 5. Swipable TRENDING NOW */}
+          <TrendingNow
+            SectionHeader={SectionHeader}
+            EmptySectionState={EmptySectionState}
+            ImagePlaceholder={ImagePlaceholder}
+          />
 
 
-        {/* 2. Promotional Banners Carousel */}
-        <PromotionalBanners
-          EmptySectionState={EmptySectionState}
-          ImagePlaceholder={ImagePlaceholder}
-        />
+          {/* 6. Real-time New Arrivals */}
+          <OurProducts
+            EmptySectionState={EmptySectionState}
+            ImagePlaceholder={ImagePlaceholder}
+          />
+    
 
+        </ScrollView>
+      </>
 
-        {/* 3. Categories Slider */}
-        <CategorySlider
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          setSearchText={setSearchText}
-          SectionHeaderComponent={SectionHeader}
-          EmptySectionStateComponent={EmptySectionState}
-        />
-
-        {/* 3.5 Standalone Section: Category Item Showcases */}
-        <CategoryShowcase
-          searchText={searchText}
-          selectedCategory={selectedCategory}
-          EmptySectionState={EmptySectionState}
-          ImagePlaceholder={ImagePlaceholder}
-        />
-
-        {/*4. Featured Product */}
-        <FeaturedProducts 
-          SectionHeader={SectionHeader}
-          EmptySectionState={EmptySectionState}
-          ImagePlaceholder={ImagePlaceholder}
-        />
-
-        {/* 5. Swipable TRENDING NOW */}
-        <TrendingNow
-          SectionHeader={SectionHeader}
-          EmptySectionState={EmptySectionState}
-          ImagePlaceholder={ImagePlaceholder}
-        />
-
-
-        {/* 6. Real-time New Arrivals */}
-        <OurProducts
-          EmptySectionState={EmptySectionState}
-          ImagePlaceholder={ImagePlaceholder}
-        />
-  
-
-      </ScrollView>
-    </SafeAreaView>
   );
 }
 

@@ -4,15 +4,20 @@ import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawe
 import { View, Text, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import CustomHeader from '../components/CustomHeader';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router'; // Imported for redirection if needed
+import { useRouter } from 'expo-router'; 
 import { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import axios from 'axios';
 
 // Custom component to display the Logo, Links, and Logout button
 function CustomDrawerContent(props) {
   const router = useRouter();
+  const insets = useSafeAreaInsets(); // <--- Handled down below
+  const { user, setUser } = useContext(UserContext);
+  const token = user?.Token; 
  
-
   const handleLogout = () => {
     Alert.alert(
       "Logout",
@@ -22,10 +27,26 @@ function CustomDrawerContent(props) {
         { 
           text: "Log Out", 
           style: "destructive",
-          onPress: () => {
-            // Add your logout state/auth clearing logic here
-            console.log("User logged out");
-            // Example: router.replace('/login');
+          onPress: async () => {
+            try {
+              const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/auth/logout`, {}, {
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              });
+
+              if (response.data.Success) {
+                await AsyncStorage.removeItem('user');
+                setUser(null); 
+                router.replace('/login');
+              }
+            } catch (error) {
+              console.log("Error during logout:", error);
+              if (typeof setUser === 'function') {
+                setUser(null);
+              }
+              router.replace('/login');
+            }
           } 
         }
       ]
@@ -33,9 +54,15 @@ function CustomDrawerContent(props) {
   };
 
   return (
-    // Changing the contentContainerStyle lets us flex grow the menu so the logout button sits neatly at the bottom
-    <DrawerContentScrollView {...props} contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={styles.logoContainer}>
+    <DrawerContentScrollView 
+      {...props} 
+      // Removed standard default safe paddings so our custom headers/footers control it precisely
+      disableSafeArea
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
+      {/* --- TOP INSET APPLIED HERE --- */}
+      {/* Replaced marginTop: -4 with dynamic paddingTop to cleanly pad out the status bar */}
+      <View style={[styles.logoContainer, { paddingTop: insets.top + 16 }]}>
         <Image 
           source={{ uri: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500' }} 
           style={styles.logoImage} 
@@ -43,24 +70,26 @@ function CustomDrawerContent(props) {
         <Text style={styles.brandName}>Maitangaran</Text>
       </View>
       
-      {/* This renders your actual drawer navigation links (like 'Home') */}
+      {/* Drawer navigation links */}
       <View style={{ flex: 1 }}>
         <DrawerItemList {...props} />
       </View>
 
-      {/* --- LOGOUT BUTTON AT THE BOTTOM --- */}
-      <View style={styles.logoutContainer}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
-      </View>
+      {/* --- BOTTOM INSET APPLIED HERE --- */}
+       {user && (
+        <View style={[styles.logoutContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
+       )}
     </DrawerContentScrollView>
   );
 }
 
 export default function DrawerLayout() {
-   const { user, setUser } = useContext(UserContext);
+    const { user, setUser } = useContext(UserContext);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
@@ -93,13 +122,11 @@ export default function DrawerLayout() {
           }}
         />
 
-
         <Drawer.Screen
           name="dashboard"
           options={{
             drawerLabel: 'Dashboard',
             title: 'Dashboard',
-            // This dynamically hides the row item from the sidebar menu if user is falsey
             drawerItemStyle: { display: user ? 'flex' : 'none' },
             drawerIcon: ({ color, size }) => (
               <Ionicons name="grid-outline" size={size} color={color} />
@@ -112,7 +139,7 @@ export default function DrawerLayout() {
           options={{
             drawerLabel: 'Account Profile',
             title: 'Account Profile',
-            drawerItemStyle: { display: user ? 'flex' : 'none' }, // hide this screen if the user is not login
+            drawerItemStyle: { display: user ? 'flex' : 'none' }, 
             drawerIcon: ({ color, size }) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),
@@ -124,7 +151,7 @@ export default function DrawerLayout() {
           options={{
             drawerLabel: 'Order Ledger',
             title: 'Order Ledger',
-            drawerItemStyle: { display: user ? 'flex' : 'none' },  // hide this screen if the user is not login
+            drawerItemStyle: { display: user ? 'flex' : 'none' },  
             drawerIcon: ({ color, size }) => (
               <Ionicons name="receipt-outline" size={size} color={color} />
             ),
@@ -136,7 +163,6 @@ export default function DrawerLayout() {
           options={{
             drawerLabel: 'Change Password',
             title: 'Change Password',
-            // This dynamically hides the row item from the sidebar menu if user is falsey
             drawerItemStyle: { display: user ? 'flex' : 'none' },
             drawerIcon: ({ color, size }) => (
               <Ionicons name="lock-closed-outline" size={size} color={color} />
@@ -179,11 +205,11 @@ export default function DrawerLayout() {
 
 const styles = StyleSheet.create({
   logoContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
     backgroundColor: '#000000',
     borderBottomWidth: 1,
     borderBottomColor: '#1F2937',
-    marginTop: -4,
     marginBottom: 10,
     alignItems: 'center',
   },
@@ -199,10 +225,10 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   logoutContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6', // Subtle divider row right above logout
-    marginBottom: 10,
+    borderTopColor: '#F3F4F6', 
   },
   logoutButton: {
     flexDirection: 'row',
@@ -214,8 +240,7 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#EF4444', // Red text color for semantic destructive action
+    color: '#EF4444', 
     marginLeft: 12,
   },
 });
-

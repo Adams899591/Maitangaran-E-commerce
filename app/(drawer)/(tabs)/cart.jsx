@@ -225,205 +225,206 @@ export default function CartScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
-      {/* HEADER SECTION */}
-      <View className="px-4 pt-2 pb-3 bg-black border-b border-zinc-900 flex-row justify-between items-center">
-        <View className="flex-row items-center">
-          <Text className="text-xl font-black tracking-tight text-white">YOUR BAG</Text>
-          <View className="ml-2 bg-zinc-800 px-2 py-0.5 rounded-full">
-            <Text className="text-white text-[11px] font-bold">{cartTotals.totalQuantity}</Text>
-          </View>
-        </View>
-        
-        <TouchableOpacity 
-          onPress={handleClearAllCart} 
-          disabled={isClearing || cartItems.length === 0}
-          className="flex-row items-center space-x-1.5"
-        >
-          {isClearing ? (
-            <ActivityIndicator size="small" color="#A1A1AA" style={{ transform: [{ scale: 0.7 }] }} />
-          ) : (
-            <Text className={`text-xs font-bold ${cartItems.length === 0 ? 'text-zinc-600' : 'text-gray-400'}`}>
-              Clear all
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
 
-      {/* CART ITEMS LIST */}
-      <FlatList
-        data={cartItems}
-        keyExtractor={(item) => item.ID}
-        contentContainerStyle={{ padding: 16, paddingBottom: 220 }}
-        showsVerticalScrollIndicator={false}
-        
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleOnRefresh}
-            tintColor="#000000"     
-            colors={["#000000"]}    
-          />
-        }
-        
-        ListEmptyComponent={
-          <View className="items-center justify-center pt-32 px-6">
-            <View className="w-16 h-16 bg-gray-50 rounded-full items-center justify-center mb-4">
-              <Feather name="shopping-bag" size={24} color="#9CA3AF" />
+    <>
+        {/* HEADER SECTION */}
+        <View className="px-4 pt-2 pb-3 bg-black border-b border-zinc-900 flex-row justify-between items-center">
+          <View className="flex-row items-center">
+            <Text className="text-xl font-black tracking-tight text-white">YOUR BAG</Text>
+            <View className="ml-2 bg-zinc-800 px-2 py-0.5 rounded-full">
+              <Text className="text-white text-[11px] font-bold">{cartTotals.totalQuantity}</Text>
             </View>
-            <Text className="text-base font-black text-black">Your bag is empty</Text>
           </View>
-        }
-        renderItem={({ item }) => {
-          const isItemSaving = !!savingItemIds[item.ID];
+          
+          <TouchableOpacity 
+            onPress={handleClearAllCart} 
+            disabled={isClearing || cartItems.length === 0}
+            className="flex-row items-center space-x-1.5"
+          >
+            {isClearing ? (
+              <ActivityIndicator size="small" color="#A1A1AA" style={{ transform: [{ scale: 0.7 }] }} />
+            ) : (
+              <Text className={`text-xs font-bold ${cartItems.length === 0 ? 'text-zinc-600' : 'text-gray-400'}`}>
+                Clear all
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-          return (
-            <View className="flex-row bg-white border border-gray-100 rounded-2xl p-3 mb-4 items-center">
-              <View className="w-20 h-24 bg-gray-50 rounded-xl overflow-hidden">
-                {item.ImageUrl ? (
-                  <Image source={{ uri: item.ImageUrl }} className="w-full h-full object-cover" />
-                ) : (
-                  <ImagePlaceholder />
-                )}
+        {/* CART ITEMS LIST */}
+        <FlatList
+          data={cartItems}
+          keyExtractor={(item) => item.ID}
+          contentContainerStyle={{ padding: 16, paddingBottom: 220 }}
+          showsVerticalScrollIndicator={false}
+          
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleOnRefresh}
+              tintColor="#000000"     
+              colors={["#000000"]}    
+            />
+          }
+          
+          ListEmptyComponent={
+            <View className="items-center justify-center pt-32 px-6">
+              <View className="w-16 h-16 bg-gray-50 rounded-full items-center justify-center mb-4">
+                <Feather name="shopping-bag" size={24} color="#9CA3AF" />
               </View>
+              <Text className="text-base font-black text-black">Your bag is empty</Text>
+            </View>
+          }
+          renderItem={({ item }) => {
+            const isItemSaving = !!savingItemIds[item.ID];
 
-              <View className="flex-1 ml-4 justify-between h-24 py-0.5">
-                <View>
-                  <View className="flex-row justify-between items-start">
-                    <Text className="text-xs text-gray-400 font-bold uppercase tracking-wider">
-                      {item.VariantLabel || 'Item'}
+            return (
+              <View className="flex-row bg-white border border-gray-100 rounded-2xl p-3 mb-4 items-center">
+                <View className="w-20 h-24 bg-gray-50 rounded-xl overflow-hidden">
+                  {item.ImageUrl ? (
+                    <Image source={{ uri: item.ImageUrl }} className="w-full h-full object-cover" />
+                  ) : (
+                    <ImagePlaceholder />
+                  )}
+                </View>
+
+                <View className="flex-1 ml-4 justify-between h-24 py-0.5">
+                  <View>
+                    <View className="flex-row justify-between items-start">
+                      <Text className="text-xs text-gray-400 font-bold uppercase tracking-wider">
+                        {item.VariantLabel || 'Item'}
+                      </Text>
+                      
+                      <View className="flex-row items-center space-x-1">
+                        <TouchableOpacity 
+                          onPress={() => saveItemToServer(item.ID)} 
+                          disabled={isItemSaving}
+                          className="p-1 -mt-1"
+                        >
+                          {isItemSaving ? (
+                            <ActivityIndicator size="small" color="#000000" style={{ transform: [{ scale: 0.75 }] }} />
+                          ) : (
+                            <Ionicons name="bookmark-outline" size={16} color="#9CA3AF" />
+                          )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => requestDeleteConfirm(item.ID)} className="p-1 -mt-1 -mr-1">
+                          <Ionicons name="trash-outline" size={16} color="#9CA3AF" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                    <Text className="text-sm font-bold text-black tracking-tight mt-0.5" numberOfLines={1}>
+                      {item.ProductName}
                     </Text>
-                    
-                    <View className="flex-row items-center space-x-1">
-                      <TouchableOpacity 
-                        onPress={() => saveItemToServer(item.ID)} 
-                        disabled={isItemSaving}
-                        className="p-1 -mt-1"
-                      >
-                        {isItemSaving ? (
-                          <ActivityIndicator size="small" color="#000000" style={{ transform: [{ scale: 0.75 }] }} />
-                        ) : (
-                          <Ionicons name="bookmark-outline" size={16} color="#9CA3AF" />
-                        )}
-                      </TouchableOpacity>
+                  </View>
 
-                      <TouchableOpacity onPress={() => requestDeleteConfirm(item.ID)} className="p-1 -mt-1 -mr-1">
-                        <Ionicons name="trash-outline" size={16} color="#9CA3AF" />
+                  <View className="flex-row justify-between items-center mt-2">
+                    <Text className="text-sm font-black text-black">{formatCurrency(item.Rate)}</Text>
+                    
+                    <View className="flex-row items-center bg-gray-100 rounded-lg px-1 py-1">
+                      <TouchableOpacity 
+                        onPress={() => updateQuantity(item.ID, 'decrease')} 
+                        className="p-1 bg-white rounded shadow-xs"
+                      >
+                        <Feather name="minus" size={12} color="black" />
+                      </TouchableOpacity>
+                      <Text className="text-xs font-black text-black px-3">{item.Quantity}</Text>
+                      <TouchableOpacity 
+                        onPress={() => updateQuantity(item.ID, 'increase')} 
+                        className="p-1 bg-white rounded shadow-xs"
+                      >
+                        <Feather name="plus" size={12} color="black" />
                       </TouchableOpacity>
                     </View>
                   </View>
-                  <Text className="text-sm font-bold text-black tracking-tight mt-0.5" numberOfLines={1}>
-                    {item.ProductName}
-                  </Text>
                 </View>
+              </View>
+            );
+          }}
+        />
 
-                <View className="flex-row justify-between items-center mt-2">
-                  <Text className="text-sm font-black text-black">{formatCurrency(item.Rate)}</Text>
-                  
-                  <View className="flex-row items-center bg-gray-100 rounded-lg px-1 py-1">
-                    <TouchableOpacity 
-                      onPress={() => updateQuantity(item.ID, 'decrease')} 
-                      className="p-1 bg-white rounded shadow-xs"
-                    >
-                      <Feather name="minus" size={12} color="black" />
-                    </TouchableOpacity>
-                    <Text className="text-xs font-black text-black px-3">{item.Quantity}</Text>
-                    <TouchableOpacity 
-                      onPress={() => updateQuantity(item.ID, 'increase')} 
-                      className="p-1 bg-white rounded shadow-xs"
-                    >
-                      <Feather name="plus" size={12} color="black" />
-                    </TouchableOpacity>
+        {/* CHECKOUT SUMMARY PANEL */}
+        {cartItems.length > 0 && (
+          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-2xl">
+            <View className="flex-row justify-between items-center mb-1.5">
+              <Text className="text-xs font-medium text-gray-400">Subtotal</Text>
+              <Text className="text-xs font-bold text-gray-800">{formatCurrency(cartTotals.subtotal)}</Text>
+            </View>
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-xs font-medium text-gray-400">Delivery Fee</Text>
+              <Text className="text-xs font-bold text-gray-800">{formatCurrency(cartTotals.deliveryFee)}</Text>
+            </View>
+
+            <View className="border-t border-gray-100 my-2" />
+
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-sm font-black text-black">TOTAL AMOUNT</Text>
+              <Text className="text-base font-black text-black">{formatCurrency(cartTotals.totalAmount)}</Text>
+            </View>
+
+            <TouchableOpacity           
+                          onPress={() => router.push({ 
+                            pathname: "/checkout",
+                            params: { tatalAmount : cartTotals.totalAmount } // Passing the total cart amount to the checkout page 
+                          })}
+                          
+                className="bg-black w-full py-4 rounded-xl flex-row justify-center items-center active:opacity-90">
+              <Text className="text-white text-xs font-black tracking-widest uppercase mr-2">Proceed to checkout</Text>
+              <Feather name="arrow-right" size={14} color="white" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* CONFIRM DELETE MODAL */}
+        <Modal
+          visible={!!itemToDelete}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => !isDeleting && setItemToDelete(null)}
+        >
+          <View className="flex-1 bg-black/50 justify-center items-center p-6">
+            <View className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-red-100">
+              <View className="bg-red-600 h-1.5 w-full" />
+              
+              <View className="p-6">
+                <View className="flex-row items-center mb-2">
+                  <View className="bg-red-50 p-2 rounded-full mr-2.5">
+                    <Feather name="alert-triangle" size={18} color="#DC2626" />
                   </View>
+                  <Text className="text-base font-black text-red-600 tracking-tight">Remove from Bag?</Text>
+                </View>
+
+                <Text className="text-xs text-gray-500 leading-relaxed pl-1">
+                  Are you sure you want to remove this item? This action will sync with your account and cannot be undone.
+                </Text>
+
+                <View className="flex-row justify-end items-center mt-6 space-x-2">
+                  <TouchableOpacity 
+                    onPress={() => setItemToDelete(null)}
+                    disabled={isDeleting}
+                    className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white active:bg-gray-50"
+                  >
+                    <Text className="text-xs font-bold text-gray-600 uppercase tracking-wider">Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    onPress={handleConfirmDelete}
+                    disabled={isDeleting}
+                    className="bg-red-600 active:bg-red-700 px-5 py-2.5 rounded-xl min-w-[100px] items-center justify-center flex-row shadow-sm"
+                  >
+                    {isDeleting ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" style={{ transform: [{ scale: 0.8 }] }} />
+                    ) : (
+                      <Text className="text-white text-xs font-black uppercase tracking-wider">Remove</Text>
+                    )}
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
-          );
-        }}
-      />
-
-      {/* CHECKOUT SUMMARY PANEL */}
-      {cartItems.length > 0 && (
-        <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-2xl">
-          <View className="flex-row justify-between items-center mb-1.5">
-            <Text className="text-xs font-medium text-gray-400">Subtotal</Text>
-            <Text className="text-xs font-bold text-gray-800">{formatCurrency(cartTotals.subtotal)}</Text>
           </View>
-          <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-xs font-medium text-gray-400">Delivery Fee</Text>
-            <Text className="text-xs font-bold text-gray-800">{formatCurrency(cartTotals.deliveryFee)}</Text>
-          </View>
+        </Modal>
+    </>
 
-          <View className="border-t border-gray-100 my-2" />
-
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-sm font-black text-black">TOTAL AMOUNT</Text>
-            <Text className="text-base font-black text-black">{formatCurrency(cartTotals.totalAmount)}</Text>
-          </View>
-
-          <TouchableOpacity           
-                        onPress={() => router.push({ 
-                          pathname: "/checkout",
-                          params: { tatalAmount : cartTotals.totalAmount } // Passing the total cart amount to the checkout page 
-                        })}
-                        
-              className="bg-black w-full py-4 rounded-xl flex-row justify-center items-center active:opacity-90">
-            <Text className="text-white text-xs font-black tracking-widest uppercase mr-2">Proceed to checkout</Text>
-            <Feather name="arrow-right" size={14} color="white" />
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* CONFIRM DELETE MODAL */}
-      <Modal
-        visible={!!itemToDelete}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => !isDeleting && setItemToDelete(null)}
-      >
-        <View className="flex-1 bg-black/50 justify-center items-center p-6">
-          <View className="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-red-100">
-            <View className="bg-red-600 h-1.5 w-full" />
-            
-            <View className="p-6">
-              <View className="flex-row items-center mb-2">
-                <View className="bg-red-50 p-2 rounded-full mr-2.5">
-                  <Feather name="alert-triangle" size={18} color="#DC2626" />
-                </View>
-                <Text className="text-base font-black text-red-600 tracking-tight">Remove from Bag?</Text>
-              </View>
-
-              <Text className="text-xs text-gray-500 leading-relaxed pl-1">
-                Are you sure you want to remove this item? This action will sync with your account and cannot be undone.
-              </Text>
-
-              <View className="flex-row justify-end items-center mt-6 space-x-2">
-                <TouchableOpacity 
-                  onPress={() => setItemToDelete(null)}
-                  disabled={isDeleting}
-                  className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white active:bg-gray-50"
-                >
-                  <Text className="text-xs font-bold text-gray-600 uppercase tracking-wider">Cancel</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  onPress={handleConfirmDelete}
-                  disabled={isDeleting}
-                  className="bg-red-600 active:bg-red-700 px-5 py-2.5 rounded-xl min-w-[100px] items-center justify-center flex-row shadow-sm"
-                >
-                  {isDeleting ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" style={{ transform: [{ scale: 0.8 }] }} />
-                  ) : (
-                    <Text className="text-white text-xs font-black uppercase tracking-wider">Remove</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
   );
 }

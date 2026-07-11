@@ -18,9 +18,12 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 import { UserContext } from '../context/UserContext';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 
 export default function CustomerShippingScreen() {
   const { user } = useContext(UserContext);
+  const insets = useSafeAreaInsets(); 
   const token = user?.Token;
   const { tatalAmount } = useLocalSearchParams(); 
   const router = useRouter();
@@ -159,9 +162,7 @@ export default function CustomerShippingScreen() {
 
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
-
+      <>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         className="flex-1"
@@ -169,7 +170,7 @@ export default function CustomerShippingScreen() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView 
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ flexGrow: 1, padding: 24 }}
+            contentContainerStyle={{ flexGrow: 1, padding: 24 , paddingBottom: insets.bottom + 24 }}
           >
             
             {/* INTRO TEXT & BACK */}
@@ -366,7 +367,7 @@ export default function CustomerShippingScreen() {
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </>
   );
 }   
 

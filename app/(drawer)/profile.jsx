@@ -18,10 +18,13 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import { UserContext } from '../context/UserContext';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 
 export default function ProfileScreen() {
   const { user, setUser } = useContext(UserContext);
-
+  const insets = useSafeAreaInsets(); 
+ 
   const userData = user?.Customer; // break the user Customer so that it can be accessable easily
 
 
@@ -76,7 +79,7 @@ export default function ProfileScreen() {
       });
 
       const data = response.data;
-      console.log(JSON.stringify(data, null, 2));
+      // console.log(JSON.stringify(data, null, 2));
 
 
       if (data.Success === true) {
@@ -106,13 +109,8 @@ export default function ProfileScreen() {
 
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+     <>
 
-      {/*  
-        PROFESSIONAL TOP BANNER PLACEMENT 
-        Placed completely outside the main scrolling wrapper so it expands flawlessly edge-to-edge
-      */}
       {errorMessage ? (
         <View className="bg-red-50 border-b border-red-100 px-6 py-3.5 flex-row items-center space-x-3">
           <Ionicons name="alert-circle" size={20} color="#dc2626" />
@@ -142,7 +140,8 @@ export default function ProfileScreen() {
         className="flex-1"
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView 
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'start' }}
           >
@@ -299,7 +298,7 @@ export default function ProfileScreen() {
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </>
   );
 }
 

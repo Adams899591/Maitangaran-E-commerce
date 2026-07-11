@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
 import { DrawerActions } from '@react-navigation/native'; // Added this import
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"; // 1. Import hook
 
 const COMPANY_DATA = {
   name: 'Maitangaran',
@@ -11,6 +12,7 @@ const COMPANY_DATA = {
 
 export default function CustomHeader() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets(); // 2. Initialize insets
 
   const handleMenuPress = () => {
     // This safely dispatches a toggle action to the closest parent drawer layout
@@ -18,8 +20,8 @@ export default function CustomHeader() {
   };
 
   return (
-    <View className="px-4 pt-2 pb-3 flex-row justify-between items-center bg-black border-b border-zinc-900">
-      <View className="flex-row items-center">
+    <View style={{ paddingTop: insets.top + 8 }} className="px-4 pt-2 pb-3 flex-row justify-between items-center bg-black border-b border-zinc-900">
+      <View  className="flex-row items-center">
         {/* Updated onPress here */}
         <TouchableOpacity onPress={handleMenuPress} className="p-2 -ml-2 mr-2">
           <Feather name="menu" size={24} color="white" />
