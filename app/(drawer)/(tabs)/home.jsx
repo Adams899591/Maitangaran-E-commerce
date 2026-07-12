@@ -1,22 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {  View,  Text,  ScrollView, Dimensions, StatusBar } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react'; // <-- Added useCallback here
+import { View, Text, ScrollView, Dimensions, RefreshControl } from 'react-native'; // <-- Added RefreshControl here
 
-import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'; // <-- Added MaterialCommunityIcons for gesture icons
+import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'; 
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import HomeSearchBar from "../../components/Home/HomeSearchBar";
 import PromotionalBanners from "../../components/Home/PromotionalBanners";
 import CategorySlider from "../../components/Home/CategorySlider";
 import CategoryShowcase from "../../components/Home/CategoryShowcase";
 import FeaturedProducts from "../../components/Home/FeaturedProducts";
-import TrendingNow from "../../components/Home/TrendingNow";
 import OurProducts from "../../components/Home/OurProducts";
-import { useSafeAreaInsets } from "react-native-safe-area-context"; // 1. Import hook
-
+import TrendingNow from "../../components/Home/TrendingNow";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; 
 
 const { width } = Dimensions.get('window');
 
-// Reusable Section Header Component showing visual horizontal cues  =>  Swipe
+// Reusable Section Header Component showing visual horizontal cues
 function SectionHeader({ title, showSwipeIndicator = false, rightElement = null }) {
   return (
     <View className="px-4 mb-4 flex-row justify-between items-center">
@@ -35,7 +33,7 @@ function SectionHeader({ title, showSwipeIndicator = false, rightElement = null 
   );
 }
 
-// Centered Empty State helper that preserves layout height => No Match
+// Centered Empty State helper
 function EmptySectionState({ message, heightClass = "h-44" }) {
   return (
     <View style={{ width: width - 32 }} className={`mx-4 bg-gray-50 border border-gray-100 rounded-2xl items-center justify-center p-6 ${heightClass}`}>
@@ -47,7 +45,7 @@ function EmptySectionState({ message, heightClass = "h-44" }) {
   );
 }
 
-// Global Image Placeholder Component => No image uploaded
+// Global Image Placeholder Component
 function ImagePlaceholder({ heightClass = "h-44" }) {
   return (
     <View className={`w-full ${heightClass} bg-gray-100 items-center justify-center`}>
@@ -57,81 +55,101 @@ function ImagePlaceholder({ heightClass = "h-44" }) {
   );
 }
 
-
-
 export default function HomeScreen() {
   const [searchText, setSearchText] = useState('');
-  const insets = useSafeAreaInsets(); // 2. Initialize insets
+  const insets = useSafeAreaInsets(); 
   const [selectedCategory, setSelectedCategory] = useState(null);
+
+  // Pull-to-refresh control triggers
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Fixed: Added the missing dependency array [] at the bottom of the hook
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    
+    // Increments the key, forcing child components to clear and rerun their own local useEffects
+    setRefreshKey(prev => prev + 1);
+    
+    // Smooth layout delay for pull spinner feedback
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setIsRefreshing(false);
+  }, []);
+
 
 
   return (
-      <>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
-          
-          {/*1. Sticky-Style Search Bar */}
-          <HomeSearchBar
-              setSearchText={setSearchText}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-              searchText={searchText}
-          />
-
-
-          {/* 2. Promotional Banners Carousel */}
-          <PromotionalBanners
-            EmptySectionState={EmptySectionState}
-            ImagePlaceholder={ImagePlaceholder}
-          />
-
-
-          {/* 3. Categories Slider */}
-          <CategorySlider
+    <>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor="#000000" />
+        }
+      >
+        
+        {/* 1. Sticky-Style Search Bar */}
+        <HomeSearchBar
+            setSearchText={setSearchText}
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
-            setSearchText={setSearchText}
-            SectionHeaderComponent={SectionHeader}
-            EmptySectionStateComponent={EmptySectionState}
-          />
-
-          {/* 3.5 Standalone Section: Category Item Showcases */}
-          <CategoryShowcase
             searchText={searchText}
-            selectedCategory={selectedCategory}
-            EmptySectionState={EmptySectionState}
-            ImagePlaceholder={ImagePlaceholder}
-          />
+        />
 
-          {/*4. Featured Product */}
-          <FeaturedProducts 
+        {/* 2. Promotional Banners Carousel */}
+        <PromotionalBanners
+          key={`banners-${refreshKey}`}
+          EmptySectionState={EmptySectionState}
+          ImagePlaceholder={ImagePlaceholder}
+        />
+
+        {/* 3. Categories Slider */}
+        <CategorySlider
+          key={`slider-${refreshKey}`}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          setSearchText={setSearchText}
+          SectionHeaderComponent={SectionHeader}
+          EmptySectionStateComponent={EmptySectionState}
+        />
+
+
+        {/* 3.5 Standalone Section: Category Item Showcases */}
+        <CategoryShowcase
+          key={`showcase-${refreshKey}`}
+          searchText={searchText}
+          selectedCategory={selectedCategory}
+          EmptySectionState={EmptySectionState}
+          ImagePlaceholder={ImagePlaceholder}
+        />         
+        
+          {/* 5. Swipable TRENDING NOW  (Hidden for future use)*/} 
+         {/* <TrendingNow
+            key={`trendingnow-${refreshKey}`}
             SectionHeader={SectionHeader}
             EmptySectionState={EmptySectionState}
             ImagePlaceholder={ImagePlaceholder}
-          />
+           />  */}
 
-          {/* 5. Swipable TRENDING NOW */}
-          <TrendingNow
-            SectionHeader={SectionHeader}
-            EmptySectionState={EmptySectionState}
-            ImagePlaceholder={ImagePlaceholder}
-          />
+        {/* 4. Featured Product */}
+        <FeaturedProducts 
+          key={`featured-${refreshKey}`}
+          SectionHeader={SectionHeader}
+          EmptySectionState={EmptySectionState}
+          ImagePlaceholder={ImagePlaceholder}
+        />
 
+        {/* 6. Real-time New Arrivals */}
+        <OurProducts
+          key={`ourproducts-${refreshKey}`}
+          EmptySectionState={EmptySectionState}
+          ImagePlaceholder={ImagePlaceholder}
+        />
 
-          {/* 6. Real-time New Arrivals */}
-          <OurProducts
-            EmptySectionState={EmptySectionState}
-            ImagePlaceholder={ImagePlaceholder}
-          />
-    
-
-        </ScrollView>
-      </>
-
+      </ScrollView>
+    </>
   );
 }
-
-
-
 
 
 

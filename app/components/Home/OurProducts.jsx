@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
+import { Ionicons } from '@expo/vector-icons'; // Added for the retry icon wrapper
 
 const { width } = Dimensions.get('window');
 
@@ -9,37 +10,58 @@ export default function OurProducts({ EmptySectionState, ImagePlaceholder }) {
   const router = useRouter();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [networkError, setNetworkError] = useState(false); // Added localized network safety status
   
   const cardWidth = (width - 44) / 2;
 
-  useEffect(() => {
-    const fetchTrendingNow = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/products`);
-        const res = response.data;
+  // Function to 
+  const fetchOurProducts = async () => {
+    try {
+      setLoading(true);
+      setNetworkError(false); // Reset error state on fetch try
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/products`);
+      const res = response.data;
 
-        // Safely set your backend response array
-        if (res && res.Success && Array.isArray(res.Data)) {
-          setProducts(res.Data);
-        } else {
-          setProducts([]);
-        }
-      } catch (error) {
-        console.log("Error fetching products:", error);
+      if (res && res.Success && Array.isArray(res.Data)) {
+        setProducts(res.Data);
+      } else {
         setProducts([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.log("Error fetching products:", error);
+      setNetworkError(true); // Flag true if network fails completely
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchTrendingNow();
-  }, []);
+  useEffect(() => {
+    fetchOurProducts();
+  }, []); // Leaving this dependency array empty is completely fine! The key prop on the parent handles the resets.
 
   if (loading) {
     return (
       <View className="mt-8 h-44 items-center justify-center">
         <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
+
+  // --- NEW: Handle localized network errors gracefully ---
+  if (networkError) {
+    return (
+      <View className="mt-8 mx-4 bg-red-50 border border-red-100 rounded-2xl items-center justify-center p-6 h-44">
+        <Ionicons name="cloud-offline-outline" size={26} color="#EF4444" />
+        <Text className="text-gray-900 text-xs font-bold mt-2 text-center">
+          Failed to load products
+        </Text>
+        <TouchableOpacity 
+          onPress={fetchOurProducts}
+          className="mt-3 bg-black px-4 py-1.5 rounded-full"
+        >
+          <Text className="text-white text-[10px] font-bold tracking-wider">RETRY</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -87,31 +109,25 @@ export default function OurProducts({ EmptySectionState, ImagePlaceholder }) {
                   <View className="flex-1">
                     {hasDiscount ? (
                       <>
-                        {/* Discount rate */}
                         <Text className="text-sm font-black text-black">
                           ₦{Number(product.OnlineRate).toLocaleString()}
                         </Text>
-                        {/* Old price crossed out in bold red */}
                         <Text className="text-[10px] font-bold text-red-600 line-through mt-0.5">
                           ₦{Number(product.SellingPrice).toLocaleString()}
                         </Text>
                       </>
                     ) : (
-                      /* Fallback for regular or identical pricing rules */
                       <Text className="text-sm font-black text-black">
                         ₦{Number(product.SellingPrice).toLocaleString()}
                       </Text>
                     )}
                   </View>
 
-                  {/* Interactivity Handler Link button */}
                   <TouchableOpacity 
-                        //  This passes the product id to the single product page
                        onPress={() => router.push({ 
                           pathname: "(drawer)/single-product",
-                          params: { id: product.ID } // Passing the product ID here
+                          params: { id: product.ID }
                         })}
-                    // onPress={() => router.push("(drawer)/single-product")}
                     className="bg-black px-3 py-1.5 rounded-lg ml-1"
                   >
                     <Text className="text-[10px] font-bold text-white tracking-wider">ADD</Text>

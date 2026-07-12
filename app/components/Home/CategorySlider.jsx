@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 
@@ -19,99 +19,77 @@ const getCategoryIcon = (categoryName) => {
 };
 
 
-export default function CategorySlider({ selectedCategory, setSelectedCategory,  setSearchText, SectionHeaderComponent, EmptySectionStateComponent }) {
+export default function CategorySlider({ selectedCategory, setSelectedCategory, setSearchText, SectionHeaderComponent, EmptySectionStateComponent }) {
 
-  
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [networkError, setNetworkError] = useState(false);
 
+  // Define the fetch handler outside useEffect so the RETRY button can trigger it
+  const handleFetchCategory = async () => {
+    setNetworkError(false);
+    setLoading(true);
 
-    // run To fetch  Cartegories once the user enters the home page 
-    useEffect(() => {
+    try {
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/categories`);
+      const res = response.data;
+      
+      if (res && Array.isArray(res.Data)) {
+        // Map API array structure to match your frontend state needs
+        const formattedCategories = res.Data.map(item => ({
+          id: item.ID,                 
+          name: item.Category,         
+          icon: getCategoryIcon(item.Category) 
+        }));
+        
+        setCategories(formattedCategories);
+      } else {
+        setNetworkError(true);
+      }
+    } catch (error) {
+      console.log("Error fetching categories:", error);
+      setNetworkError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
-      const handleFetchCategory = async () => {
-
-              try {
-                const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/categories`);
-                const res = response.data;
-                // console.log(JSON.stringify( res, null, 2));
-                // Ensure res.Data exists and is an array before processing  2b43f681-928
-                if (res && Array.isArray(res.Data)) {
-
-                      // Map API array structure to match your frontend state needs
-                      const formattedCategories = res.Data.map(item => ({
-                        id: item.ID,                 // Match uppercase ID from API
-                        name: item.Category,         // Match uppercase Category from API
-                        icon: getCategoryIcon(item.Category) // Dynamically assign icon
-                      }));
-
-                      
-                      
-                      setCategories(formattedCategories);
-                    }
-              } catch (error) {
-                console.log("Error fetching categories:", error);
-              }
-      };
-
-      handleFetchCategory(); 
-    }, []); 
-
-
-
-
-
-
- // run To fetch  Cartegories once the user enters the home page 
-    // useEffect(() => {
-
-
-    //   const handle = async () => {
-
-    //           try {
-    //             // const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/categories/4314ac06-dad`);
-    //             const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/products/category/4314ac06-dad`);
-    //             const res = response.data;
-    //             console.log(JSON.stringify(res, null, 2)); 
-                
-    //             // Ensure res.Data exists and is an array before processing
-    //             // if (res && Array.isArray(res.Data)) {
-
-    //             //       // Map API array structure to match your frontend state needs
-    //             //       const formattedCategories = res.Data.map(item => ({
-    //             //         id: item.ID,                 // Match uppercase ID from API
-    //             //         name: item.Category,         // Match uppercase Category from API
-    //             //         icon: getCategoryIcon(item.Category) // Dynamically assign icon
-    //             //       }));
-
-    //             //       setCategories(formattedCategories);
-    //             //     }
-    //           } catch (error) {
-    //             console.log("Error fetching categories:", error);
-    //           }
-    //   };
-
-    //   handle(); 
-    // }, []);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  // Run once when the component mounts
+  useEffect(() => {
+    handleFetchCategory(); 
+  }, []); 
 
   // Choose whichever Header element configuration you prefer
   const Header = SectionHeaderComponent || View;
 
+  // 1. Show Loading Indicator if fetching
+  if (loading) {
+    return (
+      <View className="mt-8 h-20 items-center justify-center">
+        <ActivityIndicator size="small" color="#000" />
+      </View>
+    );
+  }
+
+  // 2. Show Error View if network requests or layout parsing fails
+  if (networkError) {
+    return (
+      <View className="mt-8 mx-4 bg-red-50 border border-red-100 rounded-2xl items-center justify-center p-4 h-24">
+        <Ionicons name="cloud-offline-outline" size={22} color="#EF4444" />
+        <Text className="text-gray-900 text-[11px] font-bold mt-1 text-center">
+          Failed to load categories
+        </Text>
+        <TouchableOpacity 
+          onPress={handleFetchCategory}
+          className="mt-2 bg-black px-3 py-1 rounded-full"
+        >
+          <Text className="text-white text-[9px] font-bold tracking-wider">RETRY</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // 3. Fallback safely if array simply returns empty (no structural/network error)
   if (categories.length === 0) {
     return <EmptySectionStateComponent heightClass="h-20" message="No categories available at the moment." />;
   }
@@ -136,9 +114,6 @@ export default function CategorySlider({ selectedCategory, setSelectedCategory, 
                   setSelectedCategory(null);
                   setSearchText('');
                 } else {
-                  // Set the selected state to the active category's unique ID.
-                  // This ID (e.g., "4314ac06-dad") will be tracked by the parent component Home.jsx
-                  // and passed into the CategoryShowcase API hook to fetch filtered products from Laravel.
                   setSelectedCategory(item.id);
                   setSearchText(item.name);
                 }

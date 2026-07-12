@@ -1,16 +1,18 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons'; 
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const HomeSearchBar = ({ setSearchText, selectedCategory, setSelectedCategory, searchText}) => {
-  
+    const insets = useSafeAreaInsets();
+
   // Function to Clear search filter
   const clearFilters = () => {
     setSearchText('');
     setSelectedCategory(null);
   };
   
-  
+   
   return (
       <>
           { /* Sticky-Style Search Bar Container */ }
@@ -47,4 +49,21 @@ const HomeSearchBar = ({ setSearchText, selectedCategory, setSelectedCategory, s
 };
 
 export default HomeSearchBar 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -16,24 +16,6 @@ export default function TrendingNow({ SectionHeader, EmptySectionState, ImagePla
 
 
 
-  //  useEffect(() => {
-  //    const fetchTrendingNow =  async () => {
-  //           try {
-              
-  //           } catch (error) {
-  //             console.log(error);
-              
-  //           } 
-  //     }
-   
-  //     fetchTrendingNow();
-  //  }, [])
-   
-
-
-
-
-
 
 
   if (TRENDING_NOW.length === 0) {
