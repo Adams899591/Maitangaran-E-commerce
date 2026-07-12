@@ -1,9 +1,13 @@
 import { Tabs } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context"; // 1. Import hook
+import { useContext } from "react";
+import { UserContext } from "@/app/context/UserContext";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets(); // 2. Initialize insets
+  const ctx = useContext(UserContext) as any;
+  const user = ctx?.user;
 
   return (
     <Tabs
@@ -72,17 +76,35 @@ export default function TabLayout() {
           ),
         }}
       />
-
-      {/* 4. Login */}
+      
+      {/* 4. Login and Dashboard - completely remove layout slot when hidden */}
       <Tabs.Screen
         name="login"
         options={{
           title: "Login",
+          // FIXED: Use href instead of tabBarButton to prevent empty spaces
+          href: user ? null : "/login",  // Na only this line of code do the work
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? "log-in" : "log-in-outline"} 
-              size={22} 
-              color={color} 
+            <Ionicons
+              name={focused ? "log-in" : "log-in-outline"}
+              size={22}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: "Dashboard",
+          // FIXED: Use href instead of tabBarButton to prevent empty spaces
+          href: user ? "/dashboard" : null,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "grid" : "grid-outline"}
+              size={22}
+              color={color}
             />
           ),
         }}

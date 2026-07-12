@@ -16,6 +16,7 @@ function CustomDrawerContent(props) {
   const router = useRouter();
   const insets = useSafeAreaInsets(); // <--- Handled down below
   const { user, setUser } = useContext(UserContext);
+
   const token = user?.Token; 
  
   const handleLogout = () => {
@@ -89,7 +90,9 @@ function CustomDrawerContent(props) {
 }
 
 export default function DrawerLayout() {
-    const { user, setUser } = useContext(UserContext);
+      const ctx = useContext(UserContext) as any;
+      const user = ctx?.user;  // help so the user dosent appear as red
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
@@ -118,18 +121,6 @@ export default function DrawerLayout() {
             title: 'Home',
             drawerIcon: ({ color, size }) => (
               <Ionicons name="home-outline" size={size} color={color} />
-            ),
-          }}
-        />
-
-        <Drawer.Screen
-          name="dashboard"
-          options={{
-            drawerLabel: 'Dashboard',
-            title: 'Dashboard',
-            drawerItemStyle: { display: user ? 'flex' : 'none' },
-            drawerIcon: ({ color, size }) => (
-              <Ionicons name="grid-outline" size={size} color={color} />
             ),
           }}
         />

@@ -27,6 +27,11 @@ export default function OrdersTableScreen() {
 
   //  Function to handle fetch other
   const fetchUserOrders = async () => {
+    if (!token) {
+      setOrders([]);
+      return;
+    }
+
     try {
       setIsLoading(true);
       const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/orders`, {
@@ -38,9 +43,12 @@ export default function OrdersTableScreen() {
              
       if (response.data && response.data.Success) {
         setOrders(response.data.Data);
+      } else {
+        setOrders([]);
       }
     } catch (error) {
       console.log("Error fetching orders:", error);
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +75,7 @@ export default function OrdersTableScreen() {
 
   useEffect(() => {
     fetchUserOrders();
-  }, []);
+  }, [token]);
 
   return (
      <>

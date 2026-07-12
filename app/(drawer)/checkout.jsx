@@ -51,18 +51,22 @@ export default function CustomerShippingScreen() {
 
   // Fetch initial shipping details on mount
   useEffect(() => { 
-    
     const handleFetchShipping = async () => {
-      if (!token) return;
+      if (!token) {
+        setNameOfUser('');
+        setAddress('');
+        setPhoneNo('');
+        setStateOfResidence('');
+        setEmailAddress('');
+        return;
+      }
+
       try {
         const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/customer/shipping`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
         const res = response.data;
-
-         console.log(JSON.stringify(res, null, 2));
-         
 
         // Updated payload check to use backend casing conventions (Success / Data)
         if (res.Success && res.Data) {
@@ -71,9 +75,20 @@ export default function CustomerShippingScreen() {
           setPhoneNo(res.Data.PhoneNo || '');
           setStateOfResidence(res.Data.StateOfResidence || '');
           setEmailAddress(res.Data.EmailAddress || '');
+        } else {
+          setNameOfUser('');
+          setAddress('');
+          setPhoneNo('');
+          setStateOfResidence('');
+          setEmailAddress('');
         }
       } catch (error) {
         console.log("Error fetching shipping data:", error);
+        setNameOfUser('');
+        setAddress('');
+        setPhoneNo('');
+        setStateOfResidence('');
+        setEmailAddress('');
       }
     };
 

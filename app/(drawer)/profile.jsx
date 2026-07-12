@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   const { user, setUser } = useContext(UserContext);
   const insets = useSafeAreaInsets(); 
  
-  const userData = user?.Customer; // break the user Customer so that it can be accessable easily
+  const userData = user?.Customer ?? user; // support both nested and flat user payloads
 
 
 
@@ -39,6 +39,28 @@ export default function ProfileScreen() {
   const [prefferedAddress, setPrefferedAddress] = useState(userData?.PrefferedAddress);
   const [prefferedState, setPrefferedState] = useState(userData?.PrefferedState);
   const [token, setToken] = useState(user?.Token); // pass the user token here so that after firat update the token still stay
+
+  useEffect(() => {
+    if (userData) {
+      setCustomerName(userData.CustomerName ?? '');
+      setEmail(userData.Email ?? '');
+      setPhone(userData.Phone ?? '');
+      setAddress(userData.Address ?? '');
+      setAddress2(userData.Address2 ?? '');
+      setPrefferedAddress(userData.PrefferedAddress ?? '');
+      setPrefferedState(userData.PrefferedState ?? '');
+      setToken(user?.Token ?? '');
+    } else if (!user) {
+      setCustomerName('');
+      setEmail('');
+      setPhone('');
+      setAddress('');
+      setAddress2('');
+      setPrefferedAddress('');
+      setPrefferedState('');
+      setToken('');
+    }
+  }, [userData, user]);
   
   const [isLoading, setIsLoading] = useState(false);
   // Design tip: Keep message states clean

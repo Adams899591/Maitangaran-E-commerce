@@ -2,20 +2,20 @@ import React, { useContext } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { UserContext } from '../context/UserContext';
+import { UserContext } from '../../context/UserContext';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function UserDashboard() {
   const { user, setUser } = useContext(UserContext);
   const router = useRouter();
   const insets = useSafeAreaInsets(); 
-  console.log("Current User Data:", user);
+   const userData = user?.Customer ?? user; // support both nested and flat user payloads
   
 
 
   const userProfile = {
-    name: user?.Customer?.CustomerName,
-    type: user?.Customer?.Email,
+    name: userData?.CustomerName,
+    type: userData?.Email,
   };
 
   return (
