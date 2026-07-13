@@ -30,12 +30,14 @@ function CustomDrawerContent(props) {
           style: "destructive",
           onPress: async () => {
             try {
-              const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/auth/logout`, {}, {
+              const response = await axios.post(`${process.env.EXPO_PUBLIC_API_URL}/auth/logout`, {
                 headers: {
                   Authorization: `Bearer ${token}`
                 }
               });
 
+              // console.log(response);
+              
               if (response.data.Success) {
                 await AsyncStorage.removeItem('user');
                 setUser(null); 
@@ -65,7 +67,7 @@ function CustomDrawerContent(props) {
       {/* Replaced marginTop: -4 with dynamic paddingTop to cleanly pad out the status bar */}
       <View style={[styles.logoContainer, { paddingTop: insets.top + 16 }]}>
         <Image 
-          source={{ uri: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500' }} 
+          source={require('../../assets/images/icon.png')} 
           style={styles.logoImage} 
         />
         <Text style={styles.brandName}>Maitangaran</Text>

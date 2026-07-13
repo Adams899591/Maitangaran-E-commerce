@@ -9,29 +9,31 @@ import {
   FlatList, 
   Image, 
   Dimensions,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
-const MOCK_CATEGORIES = [
-  { id: 'cat_1', name: 'Shoes', icon: 'walk-outline' },
-  { id: 'cat_2', name: 'Fabrics', icon: 'layers-outline' },
-  { id: 'cat_3', name: 'Lace', icon: 'sparkles-outline' },
-  { id: 'cat_4', name: 'Ankara', icon: 'color-palette-outline' },
-];
+// Helper function to map category names to Ionicons names safely
+const getCategoryIcon = (categoryName) => {
+  const name = categoryName.toLowerCase();
+  if (name.includes('voile') || name.includes('layers')) return 'layers-outline';
+  if (name.includes('shadda') || name.includes('ribbon')) return 'ribbon-outline';
+  if (name.includes('lace') || name.includes('sparkles')) return 'sparkles-outline';
+  if (name.includes('ankara') || name.includes('color')) return 'color-palette-outline';
+  if (name.includes('material') || name.includes('cut')) return 'cut-outline';
+  if (name.includes('jakard') || name.includes('grid')) return 'grid-outline';
+  if (name.includes('footwear') || name.includes('shoe')) return 'walk-outline';
+  if (name.includes('ready made')) return 'shirt-outline';
+  
+  return 'apps-outline'; // Default backup icon
+};
 
-const MOCK_SEARCH_RESULTS = [
-  { id: 'p1', name: 'Classic Leather Derby', price: '₦120,000', categoryId: 'cat_1', image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=500' },
-  { id: 'p2', name: 'Premium Velvet Loafers', price: '₦145,000', categoryId: 'cat_1', image: 'https://images.unsplash.com/photo-1531310197839-ccf54634509e?w=500' },
-  { id: 'p3', name: 'Super Voile Fabric Silk', price: '₦85,000', categoryId: 'cat_2', image: 'https://images.unsplash.com/photo-1606744824163-985d376605aa?w=400' },
-  { id: 'p4', name: 'Luxury Brocade Material', price: '₦95,000', categoryId: 'cat_2', image: 'https://images.unsplash.com/photo-1544441893-675973e31985?w=500' },
-  { id: 'p5', name: 'Premium Ankara Wax', price: '₦40,000', categoryId: 'cat_4', image: '' }, // Testing placeholder fallback here
-  { id: 'p6', name: 'Embroidered Swiss Lace', price: '₦110,000', categoryId: 'cat_3', image: 'https://images.unsplash.com/photo-1584143257221-f138841ea1b0?w=500' },
-];
-
-// Global Image Placeholder Component
+// Function to handle No image uploaded
 function ImagePlaceholder({ heightClass = "h-44" }) {
   return (
     <View className={`w-full ${heightClass} bg-gray-100 items-center justify-center rounded-xl`}>
@@ -41,46 +43,117 @@ function ImagePlaceholder({ heightClass = "h-44" }) {
   );
 }
 
-export default function SearchScreen({ navigation }) {
+export default function SearchScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');             
   const [selectedCategory, setSelectedCategory] = useState(null); 
-  const [recentSearches, setRecentSearches] = useState(['Shoes', 'Voile Fabric', 'Ankara 2026']);
   const [filteredResults, setFilteredResults] = useState([]);
+  
+  // API State
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [networkError, setNetworkError] = useState(false);
 
   useEffect(() => {
-    executeSearchFilter();
-  }, [searchQuery, selectedCategory]);
+    executeSearchFilter();  
+  }, [searchQuery, selectedCategory, products]);
 
+
+  // Function design to handle Search Products executeSearchFilter
   const executeSearchFilter = () => {
-    let results = MOCK_SEARCH_RESULTS;
+    let results = products;
 
+    // Filter by category selection pill
     if (selectedCategory) {
-      results = results.filter(item => item.categoryId === selectedCategory.id);
+      results = results.filter(item => item.category === selectedCategory.name);
     }
 
+    // Filter by text search: checks name, category string, and price string
     if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
       results = results.filter(item => 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        item.name.toLowerCase().includes(query) ||
+        (item.category && item.category.toLowerCase().includes(query)) ||
+        item.price.toLowerCase().includes(query)
       );
     }
 
     setFilteredResults(results);
   };
 
-  const handleRecentSearchPress = (query) => {
-    setSearchQuery(query);
-    const matchedCat = MOCK_CATEGORIES.find(c => c.name.toLowerCase() === query.toLowerCase());
-    if (matchedCat) setSelectedCategory(matchedCat);
-  };
-
   const clearAllFilters = () => {
     setSearchQuery('');
     setSelectedCategory(null);
   };
+ 
+  //  Function that Fetch All Category
+  const handleFetchCategory = async () => {
+    setNetworkError(false);  
+    setLoading(true);
+
+    try {
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/categories`);
+      const res = response.data;
+      
+      if (res && Array.isArray(res.Data)) {
+        const formattedCategories = res.Data.map(item => ({
+          id: item.ID,                 
+          name: item.Category,         
+          icon: getCategoryIcon(item.Category) 
+        }));
+        setCategories(formattedCategories);
+      } else {
+        setNetworkError(true);
+      }
+    } catch (error) {
+      console.log("Error fetching categories:", error);
+      setNetworkError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function that Fetch All Products 
+  const fetchOurProducts = async () => { 
+    try {
+      setLoading(true);
+      setNetworkError(false); 
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/products`);
+      const res = response.data;
+
+      if (res && res.Success && Array.isArray(res.Data)) {
+        const formattedProducts = res.Data.map(item => ({
+          id: item.ID,
+          name: item.ProductName.trim(),
+          price: `₦${item.SellingPrice.toLocaleString()}`,
+          category: item.Category,
+          image: item.LargeImage || item.SmallImage || ''
+        }));
+        setProducts(formattedProducts);
+      } else {
+        setProducts([]);
+      }
+    } catch (error) {
+      console.log("Error fetching products:", error);
+      setNetworkError(true); 
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // UseEffect that mount both Fetch Category and Fetch Products
+  useEffect(() => {
+    handleFetchCategory(); 
+    fetchOurProducts();
+  }, []); 
+
+
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-       <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
       {/* SEARCH HEADER CONTAINER */}
       <View className="px-4 py-3 bg-white border-b border-gray-100 flex-row items-center">
@@ -122,54 +195,43 @@ export default function SearchScreen({ navigation }) {
       {searchQuery.length === 0 && !selectedCategory ? (
         <ScrollView showsVerticalScrollIndicator={false} className="flex-1 pt-4">
           
-          {/* RECENT SEARCH HISTORIES */}
-          {recentSearches.length > 0 && (
-            <View className="mb-6 px-4">
-              <View className="flex-row justify-between items-center mb-3">
-                <Text className="text-xs font-black tracking-wider text-gray-400 uppercase">Recent Searches</Text>
-                <TouchableOpacity onPress={() => setRecentSearches([])}>
-                  <Text className="text-xs font-bold text-gray-400">Clear</Text>
-                </TouchableOpacity>
-              </View>
-              <View className="flex-row flex-wrap">
-                {recentSearches.map((item, index) => (
-                  <TouchableOpacity 
-                    key={index} 
-                    onPress={() => handleRecentSearchPress(item)}
-                    className="bg-gray-100 px-4 py-2 rounded-full mr-2 mb-2"
-                  >
-                    <Text className="text-xs text-gray-800 font-medium">{item}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
-
           {/* GET /categories DISCOVERY LIST */}
           <View className="mb-6 px-4">
             <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-3">Browse Categories</Text>
-            <View className="flex-row flex-wrap justify-between">
-              {MOCK_CATEGORIES.map((cat) => (
-                <TouchableOpacity 
-                  key={cat.id}
-                  onPress={() => setSelectedCategory(cat)}
-                  style={{ width: (width - 44) / 2 }}
-                  className="flex-row items-center bg-gray-50 p-4 rounded-2xl mb-3 border border-gray-100"
-                >
-                  <View className="w-8 h-8 bg-white rounded-full items-center justify-center shadow-sm mr-3">
-                    <Ionicons name={cat.icon} size={16} color="black" />
-                  </View>
-                  <Text className="text-sm font-bold text-black">{cat.name}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            
+            {loading ? (
+              <ActivityIndicator size="small" color="#000" className="my-4" />
+            ) : networkError ? (
+              <TouchableOpacity 
+                onPress={() => { handleFetchCategory(); fetchOurProducts(); }} 
+                className="bg-gray-50 p-4 rounded-2xl items-center border border-gray-100"
+              >
+                <Text className="text-xs text-red-500 font-bold">Failed to load content. Tap to Retry</Text>
+              </TouchableOpacity>
+            ) : (
+              <View className="flex-row flex-wrap justify-between">
+                {categories.map((cat) => (
+                  <TouchableOpacity 
+                    key={cat.id}
+                    onPress={() => setSelectedCategory(cat)}
+                    style={{ width: (width - 44) / 2 }}
+                    className="flex-row items-center bg-gray-50 p-4 rounded-2xl mb-3 border border-gray-100"
+                  >
+                    <View className="w-8 h-8 bg-white rounded-full items-center justify-center shadow-sm mr-3">
+                      <Ionicons name={cat.icon} size={16} color="black" />
+                    </View>
+                    <Text className="text-sm font-bold text-black" numberOfLines={1}>{cat.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
 
-          {/* TRENDING PRODUCTS VERTICAL GRID */}
+          {/* ALL PRODUCTS VERTICAL GRID */}
           <View className="mb-8 px-4">
-            <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-4">Trending Products</Text>
+            <Text className="text-xs font-black tracking-wider text-gray-400 uppercase mb-4">All Products</Text>
             <View className="flex-row flex-wrap justify-between">
-              {MOCK_SEARCH_RESULTS.map((item) => (
+              {products.map((item) => (
                 <View 
                   key={`trending-${item.id}`} 
                   style={{ width: (width - 44) / 2 }} 
@@ -186,8 +248,13 @@ export default function SearchScreen({ navigation }) {
                     <Text className="text-xs font-bold text-black tracking-tight" numberOfLines={1}>{item.name}</Text>
                     <View className="flex-row items-center justify-between mt-2">
                       <Text className="text-sm font-black text-black">{item.price}</Text>
-                      <TouchableOpacity className="bg-black px-2.5 py-1.5 rounded-lg">
-                        <Text className="text-[10px] font-bold text-white tracking-wider">VIEW</Text>
+                      <TouchableOpacity
+                        onPress={() => router.push({ 
+                          pathname: "(drawer)/single-product",
+                          params: { id: item.id }
+                        })}
+                       className="bg-black px-2.5 py-1.5 rounded-lg">
+                        <Text className="text-[10px] font-bold text-white tracking-wider">ADD</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -228,7 +295,12 @@ export default function SearchScreen({ navigation }) {
                 <Text className="text-xs font-bold text-black tracking-tight" numberOfLines={1}>{item.name}</Text>
                 <View className="flex-row items-center justify-between mt-2">
                   <Text className="text-sm font-black text-black">{item.price}</Text>
-                  <TouchableOpacity className="bg-black px-3 py-1.5 rounded-lg">
+                  <TouchableOpacity
+                       onPress={() => router.push({ 
+                          pathname: "(drawer)/single-product",
+                          params: { id: item.id }
+                        })}
+                   className="bg-black px-3 py-1.5 rounded-lg">
                     <Text className="text-[10px] font-bold text-white tracking-wider">ADD</Text>
                   </TouchableOpacity>
                 </View>

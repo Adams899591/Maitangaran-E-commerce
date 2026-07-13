@@ -7,7 +7,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 const COMPANY_DATA = {
   name: 'Maitangaran',
-  deliveryText: 'Deliver to John • Lagos',
+  deliveryText: 'mtextile70@yahoo.com',
 };
 
 export default function CustomHeader() {

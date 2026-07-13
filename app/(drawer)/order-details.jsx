@@ -182,7 +182,7 @@ export default function OrderDetailsScreen() {
 
       {/* HEADER BAR */}
       <View className="px-4 py-3 bg-white border-b border-slate-100 flex-row items-center justify-between">
-        <TouchableOpacity onPress={() => router.back()} className="p-1 -ml-1 flex-row items-center">
+        <TouchableOpacity onPress={() => router.push("/orders")} className="p-1 -ml-1 flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="#0f172a" />
           <Text className="text-slate-900 font-medium ml-1">Order Details</Text>
         </TouchableOpacity>
@@ -191,7 +191,7 @@ export default function OrderDetailsScreen() {
         </Text>
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-4" contentContainerStyle={{ paddingBottom: canCancel ? 100 : 40 }}>
+      <ScrollView className="flex-1 px-4 pt-4" contentContainerStyle={{ paddingBottom: canCancel ? 200 : 40 }}>
         
         {/* HERO CARD SUMMARY */}
         <View className="bg-slate-900 rounded-3xl p-5 mb-5" style={cardShadow}>

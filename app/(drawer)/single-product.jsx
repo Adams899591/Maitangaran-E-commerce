@@ -1,4 +1,3 @@
-
 import React, { useContext, useEffect, useState } from 'react';
 import { 
   View,
@@ -21,12 +20,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const { width } = Dimensions.get('window');
 
 // Related products data pool (Left unchanged as requested)
-const RELATED_PRODUCTS_DATA = [
-  { id: 'r1', name: 'Classic Leather Derby', price: '₦120,000', image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=500' },
-  { id: 'r2', name: 'Minimalist Chrono Watch', price: '₦195,000', image: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=500' },
-  { id: 'r3', name: 'Premium Leather Bomber', price: '₦299,000', image: '' }, 
-  { id: 'r4', name: 'Acetate Sunglasses', price: '₦65,000', image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500' },
-];
+// const RELATED_PRODUCTS_DATA = [
+//   { id: 'r1', name: 'Classic Leather Derby', price: '₦120,000', image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=500' },
+//   { id: 'r2', name: 'Minimalist Chrono Watch', price: '₦195,000', image: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=500' },
+//   { id: 'r3', name: 'Premium Leather Bomber', price: '₦299,000', image: '' }, 
+//   { id: 'r4', name: 'Acetate Sunglasses', price: '₦65,000', image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500' },
+// ];
 
 // Function to handle if they is no image =>     No image uploaded
 function ImagePlaceholder({ heightClass = "h-40" }) {
@@ -233,7 +232,7 @@ export default function SingleProductScreen() {
         </View>
 
         {/* RELATED PRODUCTS SECTION */}
-        <View className="mt-8">
+        {/* <View className="mt-8">
           <View className="flex-row justify-between items-center mb-4 px-4">
             <Text className="text-lg font-black tracking-tight text-black">RELATED PRODUCTS</Text>
             <TouchableOpacity><Text className="text-xs font-bold text-gray-500 tracking-wider">SEE ALL</Text></TouchableOpacity>
@@ -256,7 +255,7 @@ export default function SingleProductScreen() {
               </View>
             ))}
           </ScrollView>
-        </View>
+        </View> */}
 
       </ScrollView>
 
