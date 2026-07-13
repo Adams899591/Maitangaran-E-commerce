@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext, useCallback, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -10,47 +10,60 @@ import {
   Alert,
   Platform
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { UserContext } from '../context/UserContext';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 
 export default function OrderDetailsScreen() {
+  // Get user info from context
   const { user } = useContext(UserContext);
   const insets = useSafeAreaInsets();
   const token = user?.Token; 
-  const { InvoiceID } = useLocalSearchParams();  // get the InVoiceID
+  const { InvoiceID } = useLocalSearchParams();  // Get order ID from route params
   const router = useRouter();
   
+  // State for managing UI loading states and order data
   const [isLoading, setIsLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isInitializingPayment, setIsInitializingPayment] = useState(false);
   const [orderData, setOrderData] = useState(null);
 
-  useEffect(() => {
-    const fetchOrderDetails = async () => {
-      if (!InvoiceID) return;
-      try {
-        setIsLoading(true);
-        const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/orders/${InvoiceID}`, {
-          headers: {
-            Authorization: `Bearer ${token}` 
-          }
-        });
 
-        if (response.data && response.data.Success) {
-          setOrderData(response.data.Data);
+  // Fetch order details from API
+  // showSilentLoader: if true, don't show full-screen loading spinner (for refreshes)
+  const fetchOrderDetails = async (showSilentLoader = false) => {
+    if (!InvoiceID) return;
+    try {
+      // Only show loading spinner on first load
+      if (!showSilentLoader) setIsLoading(true);
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/orders/${InvoiceID}`, {
+        headers: {
+          Authorization: `Bearer ${token}` 
         }
-      } catch (error) {
-        console.log("Error fetching order details:", error);
-      } finally {
-        setIsLoading(false);
+      });
+
+      if (response.data && response.data.Success) {
+        setOrderData(response.data.Data);
       }
-    };
+    } catch (error) {
+      console.log("Error fetching order details:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchOrderDetails();
-  }, [InvoiceID, token]);
+  // Automatically fetches data whenever the user enters or focuses this page
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrderDetails(orderData !== null); // Skip spinner if we already have data
+    }, [InvoiceID, token])
+  );
 
+  // Get order status badge styling based on status code
   const getStatusConfig = (status) => {
     switch (status) {
       case 0:
@@ -62,20 +75,70 @@ export default function OrderDetailsScreen() {
     }
   };
 
+  // Format date to readable format (e.g., "13 Jul 2026")
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
+  // Handle payment button click - opens payment gateway
+  const handlePayNow = async () => {
+    if (!InvoiceID) return;
+    
+    try {
+      setIsInitializingPayment(true);
+
+      // Create deep link to redirect back to app after payment
+      const redirectUrl = Linking.createURL('/orders', { scheme: 'myreactnativeapp' });
+      
+      // Request payment initialization from API
+      const response = await axios.post( `${process.env.EXPO_PUBLIC_API_URL}/payment/initialize`,{
+          invoiceID: InvoiceID,
+          successUrl: redirectUrl, 
+          failureUrl: redirectUrl
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data && response.data.Success) {
+        const paymentInfo = response.data.Data ;
+        const authUrl = paymentInfo?.AuthorizationUrl;
+
+        if (authUrl) {
+          // Open payment page in browser
+          await WebBrowser.openBrowserAsync(authUrl);
+          
+          // Browser closed, refresh order data with latest payment status
+          fetchOrderDetails(true);
+        } else {
+          Alert.alert("Error", "Authorization URL was not found.");
+        }
+      } else {
+        Alert.alert("Error", response.data.Message || "Could not initialize payment.");
+      }
+    } catch (error) {
+      console.log("Error initializing payment:", error);
+      Alert.alert("Error", "Failed to start checkout process.");
+    } finally {
+      setIsInitializingPayment(false);
+    }
+  };
+
+  // Handle cancel order request
   const handleCancelOrder = () => {
     if (!orderData) return;
     
-    // Front-end sanity checks before firing the API request
+    // Check if order can be cancelled
     if (orderData.Status === 0) return Alert.alert("Order Cancelled", "This order is already cancelled.");
     if (orderData.AmountPaid >= orderData.Total) return Alert.alert("Action Denied", "Paid orders cannot be cancelled.");
     if (orderData.Status === 2) return Alert.alert("Action Denied", "Orders already processing cannot be cancelled.");
 
+    // Show confirmation dialog
     Alert.alert(
       "Cancel Order",
       "Are you sure you want to cancel this order?",
@@ -88,30 +151,39 @@ export default function OrderDetailsScreen() {
             setIsCancelling(true);
             
             try {
+              // Send cancel request to API
               const response = await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/orders/${InvoiceID}/cancel`,
-                {}, // PUT requests require a body object, even if empty
+                {}, 
                 {
                   headers: {
                     Authorization: `Bearer ${token}` 
                   }
                 }
               );
-                  console.log(JSON.stringify(response, null, 2));
+              console.log(response);
+              
                   
-              if (response.data && response.data.success) {
-                // Instantly update the UI status to match the newly cancelled order state
+              if (response.data && response.data.Success) {
+                // Update local state and show success
                 setOrderData(prev => ({ ...prev, Status: 0 }));
-                Alert.alert("Success", response.data.message || "Order has been cancelled.");
+                      Alert.alert(
+                        "Success", 
+                        response.data.Message || "Order has been cancelled.",
+                        [
+                          {
+                            text: "OK",
+                            onPress: () => router.push("/orders") // Go back to orders list
+                          }
+                        ]
+                      );
               }
             } catch (error) {
               console.log("Error cancelling order:", error);
-              
-              // Handle specific error codes thrown by your documentation backend
+              // Show error based on response status
               if (error.response) {
                 const status = error.response.status;
-                
                 if (status === 400) {
-                  Alert.alert("Action Denied", "This order cannot be cancelled (It might already be processed, paid, or cancelled).");
+                  Alert.alert("Action Denied", "This order cannot be cancelled.");
                 } else if (status === 404) {
                   Alert.alert("Not Found", "The requested order could not be located on the server.");
                 } else {
@@ -129,6 +201,7 @@ export default function OrderDetailsScreen() {
     );
   };
 
+  // Platform-specific shadow styling
   const cardShadow = {
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 12 },
@@ -136,6 +209,7 @@ export default function OrderDetailsScreen() {
     })
   };
 
+  // Show loading spinner while fetching
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-slate-50 justify-center items-center">
@@ -144,6 +218,7 @@ export default function OrderDetailsScreen() {
     );
   }
 
+  // Show error if order not found
   if (!orderData) {
     return (
       <SafeAreaView className="flex-1 bg-slate-50 items-center justify-center p-6">
@@ -157,9 +232,10 @@ export default function OrderDetailsScreen() {
     );
   }
 
+  // Determine order and payment status for UI
   const statusConfig = getStatusConfig(orderData.Status);
   
-  // Calculate Payment status checks dynamically
+  // Determine payment badge status
   let paymentStatus = 'Unpaid';
   let paymentBg = 'bg-amber-50';
   let paymentText = 'text-amber-600';
@@ -174,13 +250,20 @@ export default function OrderDetailsScreen() {
     paymentText = 'text-blue-600';
   }
 
-  const canCancel = orderData.Status !== 0 && paymentStatus !== 'Paid' && orderData.Status !== 2;
+  // Determine which action buttons to show
+  const isCancelled = orderData.Status === 0;
+  const isProcessing = orderData.Status === 2;
+  const isFullyPaid = paymentStatus === 'Paid';
+
+  const canPay = !isCancelled && !isFullyPaid && !isProcessing;
+  const canCancel = isCancelled === false && isFullyPaid === false && isProcessing === false && paymentStatus === 'Unpaid';
+  const showFooterActionSheet = canPay || canCancel;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
-      {/* HEADER BAR */}
+      {/* HEADER - Back button and invoice ID */}
       <View className="px-4 py-3 bg-white border-b border-slate-100 flex-row items-center justify-between">
         <TouchableOpacity onPress={() => router.push("/orders")} className="p-1 -ml-1 flex-row items-center">
           <Ionicons name="chevron-back" size={24} color="#0f172a" />
@@ -191,9 +274,9 @@ export default function OrderDetailsScreen() {
         </Text>
       </View>
 
-      <ScrollView className="flex-1 px-4 pt-4" contentContainerStyle={{ paddingBottom: canCancel ? 200 : 40 }}>
+      <ScrollView className="flex-1 px-4 pt-4" contentContainerStyle={{ paddingBottom: showFooterActionSheet ? 240 : 200 }}>
         
-        {/* HERO CARD SUMMARY */}
+        {/* HERO CARD - Shows total amount, date, and status badges */}
         <View className="bg-slate-900 rounded-3xl p-5 mb-5" style={cardShadow}>
           <Text className="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Amount</Text>
           <Text className="text-white text-3xl font-bold mt-1">₦{orderData.Total?.toLocaleString()}</Text>
@@ -215,7 +298,7 @@ export default function OrderDetailsScreen() {
           </View>
         </View>
 
-        {/* DELIVERY & NOTES SECTION */}
+        {/* DELIVERY & NOTES - Shipping address and customer notes */}
         <View className="bg-white rounded-2xl p-4 mb-5 border border-slate-100" style={cardShadow}>
           <View className="flex-row items-start mb-3">
             <View className="p-2 bg-slate-50 rounded-xl mr-3">
@@ -240,12 +323,10 @@ export default function OrderDetailsScreen() {
           )}
         </View>
 
-        {/* ORDER ITEMS TITLE */}
+        {/* ORDER ITEMS - List of products in this order */}
         {orderData.Items && orderData.Items.length > 0 && (
           <>
             <Text className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 px-1">Items Ordered</Text>
-            
-            {/* ITEMS LIST AREA */}
             {orderData.Items.map((item, index) => (
               <View key={item.ID || index.toString()} className="bg-white rounded-2xl p-4 mb-3 border border-slate-100" style={cardShadow}>
                 <Text className="text-slate-900 text-sm font-semibold" numberOfLines={2}>{item.ProductName}</Text>
@@ -272,7 +353,7 @@ export default function OrderDetailsScreen() {
           </>
         )}
 
-        {/* REVENUE BREAKDOWN SUMMARY */}
+        {/* PRICE BREAKDOWN - Total, amount paid, and balance due */}
         <View className="bg-white rounded-2xl p-4 mt-2 border border-slate-100" style={cardShadow}>
           <View className="flex-row justify-between items-center mb-2.5">
             <Text className="text-slate-500 text-xs">Subtotal</Text>
@@ -291,22 +372,46 @@ export default function OrderDetailsScreen() {
         </View>
       </ScrollView>
 
-      {/* FLOATING ACTION SHEET FOOTER */}
-      {canCancel && (
-        <View style={{ paddingBottom: insets.bottom > 0 ? insets.bottom + 12 : 16 }} className="absolute bottom-0 left-0 right-0 bg-white/95 border-t border-slate-100 px-4 pt-3 pb-6 flex-row items-center justify-center">
-          <TouchableOpacity 
-            onPress={handleCancelOrder}
-            disabled={isCancelling}
-            className="w-full bg-rose-50 border border-rose-100 h-12 rounded-xl items-center justify-center active:opacity-80"
-          >
-            {isCancelling ? (
-              <ActivityIndicator size="small" color="#e11d48" />
-            ) : (
-              <Text className="text-rose-600 text-sm font-semibold tracking-wide">Cancel This Order</Text>
-            )}
-          </TouchableOpacity>
+      {/* ACTION BUTTONS - Pay Now and Cancel Order (shown based on order status) */}
+      {showFooterActionSheet && (
+        <View 
+          style={{ paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 12 }} 
+          className="absolute bottom-0 left-0 right-0 bg-white/95 border-t border-slate-100 px-4 pt-4 pb-4 flex-col gap-2"
+        >
+          {/* Pay Now Button - Opens payment gateway */}
+          {canPay && (
+            <TouchableOpacity 
+              onPress={handlePayNow}
+              disabled={isCancelling || isInitializingPayment}
+              className="w-full bg-slate-900 h-12 rounded-xl items-center justify-center active:opacity-90 flex-row"
+            >
+              {isInitializingPayment ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <>
+                  <Ionicons name="card-outline" size={18} color="#ffffff" />
+                  <Text className="text-white text-sm font-semibold tracking-wide ml-2">Pay Now</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {/* Cancel Button - Cancels unpaid orders */}
+          {canCancel && (
+            <TouchableOpacity 
+              onPress={handleCancelOrder}
+              disabled={isCancelling || isInitializingPayment}
+              className="w-full bg-rose-50 border border-rose-100 h-12 rounded-xl items-center justify-center active:opacity-80"
+            >
+              {isCancelling ? (
+                <ActivityIndicator size="small" color="#e11d48" />
+              ) : (
+                <Text className="text-rose-600 text-sm font-semibold tracking-wide">Cancel Order</Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </SafeAreaView>
   );
-}
+}   

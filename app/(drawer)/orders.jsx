@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState, useCallback } from 'react'; 
 import { 
   View, 
   Text, 
@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router'; 
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { UserContext } from '../context/UserContext';
@@ -24,25 +24,30 @@ export default function OrdersTableScreen() {
   const [refreshing, setRefreshing] = useState(false); 
   const [orders, setOrders] = useState([]);
 
-
-  //  Function to handle fetch other
-  const fetchUserOrders = async () => {
+  // Fetch user's orders from API (use silent loader for refreshes)
+  const fetchUserOrders = async (showMinimalLoader = false) => {
     if (!token) {
       setOrders([]);
       return;
     }
 
     try {
-      setIsLoading(true);
+      if (!showMinimalLoader) setIsLoading(true);
+      
       const response = await axios.get(`${process.env.EXPO_PUBLIC_API_URL}/orders`, {
         headers: {
           Authorization: `Bearer ${token}` 
         }
       });
-            //  console.log(JSON.stringify(response, null,2));
              
       if (response.data && response.data.Success) {
-        setOrders(response.data.Data);
+        // SORTING FIX: Sorts orders chronologically (Oldest first -> Newest last)
+        // This guarantees that the most recent order sits at the bottom of the table
+        const sortedOrders = (response.data.Data || []).sort((a, b) => {
+          return new Date(a.Date).getTime() - new Date(b.Date).getTime();
+        });
+        
+        setOrders(sortedOrders);
       } else {
         setOrders([]);
       }
@@ -54,31 +59,36 @@ export default function OrdersTableScreen() {
     }
   };
 
+  // Refresh list whenever this screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserOrders(orders.length > 0); 
+    }, [token])
+  );
 
-  // on  Refresh
+  // Pull-to-refresh handler
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchUserOrders();
+    await fetchUserOrders(true);
     setRefreshing(false);
   };
 
+  // Convert numeric status code to readable label
   const parseStatus = (status) => {
     if (status === 0) return 'Cancelled';
     if (status === 2) return 'Processing';
     return 'Active';
   };
 
+  // Format ISO datetime string to YYYY-MM-DD
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
     return dateStr.split('T')[0];
   };
 
-  useEffect(() => {
-    fetchUserOrders();
-  }, [token]);
-
   return (
      <>
+        {/* HEADER - Page title and short description */}
         <View className="px-6 mt-6 mb-6">
           <Text className="text-2xl font-black tracking-tight text-black">Order Ledger</Text>
           <Text className="text-xs text-gray-400">Scroll horizontally to view details and check invoice parameters.</Text>
@@ -91,12 +101,11 @@ export default function OrdersTableScreen() {
         ) : (
           <ScrollView 
             className="flex-1"
-            refreshControl={
+            refreshControl = {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#000000" />
             }
           >
             {orders.length === 0 ? (
-              /* EMPTY STATE FEEDBACK */
               <View className="flex-1 items-center justify-center py-20 px-6">
                 <Ionicons name="receipt-outline" size={48} color="#9CA3AF" />
                 <Text className="text-black text-base font-bold mt-4 tracking-tight">No Orders Found</Text>
@@ -105,16 +114,15 @@ export default function OrdersTableScreen() {
                 </Text>
               </View>
             ) : (
-              /* TABLE VIEW */
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={true} 
                 className="pl-6"
-                contentContainerStyle={{ paddingRight: 24 }}
+                contentContainerStyle={{ paddingRight: 24, paddingBottom: 200}}
               >
                 <View className="border border-gray-100 rounded-lg overflow-hidden mb-10">
                   
-                  {/* TABLE HEADER */}
+                  {/* TABLE HEADER - column labels */}
                   <View className="flex-row bg-black py-4 px-5 items-center">
                     <Text className="text-white text-xs font-bold w-12 text-center">S/N</Text>
                     <Text className="text-white text-xs font-bold w-28">Date</Text>
@@ -125,9 +133,8 @@ export default function OrdersTableScreen() {
                     <Text className="text-white text-xs font-bold w-20 text-center">Action</Text>
                   </View>
 
-                  {/* TABLE BODY ROWS */} 
+                  {/* TABLE ROWS - one row per order */} 
                   {orders.map((item, index) => {
-                    // Determine payment string and color based on AmountPaid vs Total
                     let paymentStatus = 'Unpaid';
                     let paymentColor = 'text-gray-400';
                     
@@ -144,6 +151,7 @@ export default function OrdersTableScreen() {
                         key={item.InvoiceID || index.toString()}
                         className="flex-row border-b border-gray-100 bg-gray-50/50 py-4 px-5 items-center"
                       >
+                        {/* Since array is sorted oldest -> newest, index + 1 gives the newest item the last/highest number */}
                         <Text className="text-black text-xs font-mono font-bold w-12 text-center">{index + 1}</Text>
                         <Text className="text-gray-600 text-xs w-28">{formatDate(item.Date)}</Text>
                         <Text className="text-black text-xs font-bold w-28">₦{item.Total?.toLocaleString()}</Text>
@@ -160,7 +168,6 @@ export default function OrdersTableScreen() {
                           {item.Address}
                         </Text>
 
-                        {/* ACTION COLUMN BUTTON */}
                         <View className="w-20 items-center justify-center">
                           <TouchableOpacity 
                             onPress={() => router.push({

@@ -38,7 +38,7 @@ export default function SuccessScreen() {
             Order Placed!
           </Text>
           <Text className="text-sm text-gray-500 font-medium text-center px-6 leading-5">
-                Your order was placed successfully! We'll start processing your package right away.
+              Order Placed Successfully! Tap <Text className="font-bold">Track My Order</Text> to view your dashboard, complete your outstanding balance, and monitor your delivery. We'll start processing your package right away
           </Text>
         </View>
 
@@ -66,7 +66,7 @@ export default function SuccessScreen() {
           </TouchableOpacity>
 
           <Text className="text-[10px] text-center text-gray-400 font-medium mt-2 px-4 leading-4">
-            A receipt and order confirmation summary has been sent to your registered email address.
+              A receipt and order confirmation summary will be sent to your registered email address once your payment is successful.
           </Text>
         </View>
 
