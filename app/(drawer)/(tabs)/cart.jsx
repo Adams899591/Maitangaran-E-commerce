@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { UserContext } from '@/app/context/UserContext';
+import { CartContext } from '@/app/context/CartContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -33,6 +34,8 @@ export default function CartScreen() {
   const { user } = useContext(UserContext);
   const token = user?.Token; 
 
+  const { cartCount, setCartCount} = useContext(CartContext);
+
   const { productID, quantity: paramQuantity, variantID } = useLocalSearchParams();  
 
   // --- STATE HOOKS ---
@@ -49,7 +52,6 @@ export default function CartScreen() {
     totalAmount: 0,
     totalQuantity: 0
   });
-
   const router = useRouter();
 
   // 1. Fetch entire user cart
@@ -79,8 +81,14 @@ export default function CartScreen() {
     fetchAllUserCart();
   }, [token]);
 
-  // 2. Add item to cart automatically on navigation
   useEffect(() => {
+    if (typeof setCartCount === 'function') {
+      setCartCount(cartTotals.totalQuantity);
+    }
+  }, [cartTotals.totalQuantity, setCartCount]);
+
+  // 2. Add item to cart automatically on navigation
+  useEffect(() => { 
     const addProductToUserCart = async () => {
       if (!productID || !token) return;
       try {
@@ -91,7 +99,7 @@ export default function CartScreen() {
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (response.data.Success) {
           console.log("Product added successfully");
           fetchAllUserCart(); 

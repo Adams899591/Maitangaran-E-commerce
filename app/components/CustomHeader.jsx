@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity, StatusBar } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
 import { DrawerActions } from '@react-navigation/native'; // Added this import
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"; // 1. Import hook
+import { CartContext } from '../context/CartContext';
 
 const COMPANY_DATA = {
   name: 'Maitangaran',
@@ -11,6 +12,7 @@ const COMPANY_DATA = {
 };
 
 export default function CustomHeader() {
+  const { cartCount, setCartCount} = useContext(CartContext);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets(); // 2. Initialize insets
 
@@ -42,9 +44,12 @@ export default function CustomHeader() {
         {/* Cart Icon with Glowing Red Badge */}
         <TouchableOpacity className="p-2 relative">
           <Feather name="shopping-bag" size={22} color="white" />
+
+         {cartCount > 0 && 
           <View className="absolute top-1 right-1 bg-red-500 w-4 h-4 rounded-full items-center justify-center shadow-lg shadow-red-500/60 border border-black">
-            <Text className="text-white text-[9px] font-bold">2</Text>
+            <Text className="text-white text-[9px] font-bold">{cartCount}</Text>
           </View>
+          }
         </TouchableOpacity>
       </View>
     </View>

@@ -3,11 +3,13 @@ import "../global.css"; // Note:    This should always be on your layout
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserContext } from "./context/UserContext";
+import { CartContext } from "./context/CartContext";
 import { SafeAreaProvider} from "react-native-safe-area-context";
 
 export default function RootLayout() {
 
     const [user, setUser] = useState(null);
+    const [cartCount, setCartCount] = useState(0);
 
 
   // Load user data from AsyncStorage when the app starts
@@ -31,9 +33,11 @@ export default function RootLayout() {
   
     
     <UserContext.Provider value={{ user, setUser }}>
-       <SafeAreaProvider> 
-           <Stack screenOptions={{headerShown: false}} />
-        </SafeAreaProvider> 
+      <CartContext.Provider value={{ cartCount, setCartCount }}>
+        <SafeAreaProvider> 
+            <Stack screenOptions={{headerShown: false}} />
+          </SafeAreaProvider>
+      </CartContext.Provider>
     </UserContext.Provider>
    
   
