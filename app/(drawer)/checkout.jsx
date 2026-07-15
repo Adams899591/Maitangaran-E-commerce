@@ -19,10 +19,12 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 import { UserContext } from '../context/UserContext';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CartContext } from '@/app/context/CartContext';
 
 
 export default function CustomerShippingScreen() {
   const { user } = useContext(UserContext);
+  const { cartCount, setCartCount} = useContext(CartContext);
   const insets = useSafeAreaInsets(); 
   const token = user?.Token;
   const { tatalAmount } = useLocalSearchParams(); 
@@ -147,9 +149,10 @@ export default function CustomerShippingScreen() {
 
       console.log(JSON.stringify(response, null, 2));
       
-
+ 
       // Backend returns uppercase 'Success' structure matching IIS/ASP setups
       if (response.data.Success) {
+        setCartCount(0); // empty the cart count to 0
         Alert.alert(
           "Checkout Successful", 
           response.data.Message || "Your order has been placed successfully!",
@@ -158,7 +161,7 @@ export default function CustomerShippingScreen() {
               text: "OK", 
               onPress: () => router.push({
                 pathname: '/success',
-                params: { invoiceID: response.data.Data?.invoiceID || response.data.data?.invoiceID }
+                params: { invoiceID: response.data.Data?.invoiceID || response.data.data?.invoiceID } // Note: u passed this but u never used it
               }) 
             }
           ]

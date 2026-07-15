@@ -81,11 +81,23 @@ export default function CartScreen() {
     fetchAllUserCart();
   }, [token]);
 
+  // Keep the shared cart count updated whenever the local cart totals change.
+  // This syncs the header/cart badge with the current items in the cart.
   useEffect(() => {
     if (typeof setCartCount === 'function') {
       setCartCount(cartTotals.totalQuantity);
     }
   }, [cartTotals.totalQuantity, setCartCount]);
+
+  // If the shared cart count becomes zero but the local cart totals still
+  // show items, re-fetch the cart from the backend.
+  // This fixes the case where checkout clears the global count, but the
+  // local cart screen state is still stale.
+  useEffect(() => {
+    if (cartCount === 0 && cartTotals.totalQuantity !== 0) {
+      fetchAllUserCart();
+    }
+  }, [cartCount, cartTotals.totalQuantity]);
 
   // 2. Add item to cart automatically on navigation
   useEffect(() => { 
